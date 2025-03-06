@@ -1,0 +1,159 @@
+create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = FALSE, 
+                                 fixed_load_dose = NULL, 
+                                 load_freq = NULL, 
+                                 load_interval = NULL,
+                                 main_freq,
+                                 main_interval,
+                                 weight_bands = NULL, type= c("ref", "cacl"), upper,lower) {  # Add weight_bands parameter
+  
+  id_count <- length(unique(data$ID))
+  
+  # If loading dose is enabled, create both loading and maintenance doses
+  if (use_loading_dose && !is.null(load_freq) && !is.null(load_interval)) {
+    loading_dose_addl <- load_freq - 1
+    loading_dose_ii <- load_interval
+    maintenance_dose_addl <- main_freq - 1
+    maintenance_dose_ii <- main_interval
+    maintenance_dose_start <- (loading_dose_ii * load_freq)
+    treatment_duration <- ((load_freq * load_interval)/24) + ((main_freq * main_interval)/24)
+    
+    load_dose <- ev(amt = fixed_load_dose, II = loading_dose_ii, ADDL = loading_dose_addl)
+    maintenance_dose <- ev(time = maintenance_dose_start, amt = 0, cmt = 1,
+                           II = maintenance_dose_ii, ADDL = maintenance_dose_addl)
+    
+    dose <- c(load_dose, maintenance_dose)
+  } else {
+    # Only create maintenance dose
+    maintenance_dose_addl <- main_freq - 1
+    maintenance_dose_ii <- main_interval
+    treatment_duration <- (main_freq * main_interval)/24
+    dose <- ev(amt = 0, cmt = 1, II = maintenance_dose_ii, 
+               ADDL = maintenance_dose_addl, time = 0)
+  }
+  
+  # Replicate the event for multiple IDs
+  multiple_dose_data <- ev_rep(dose, ID = 1:id_count) %>% rename(EVID= evid, TIME=time, 
+                                                                 CMT=cmt, AMT = amt)
+  
+  Sim_data <- data %>% 
+    dplyr::select(ID, AGE, SEX, HTc, WTc, FFMc) %>%
+    rename(HT = HTc, WT = WTc, FFM = FFMc) %>% 
+    merge(multiple_dose_data, by = "ID", all.x = TRUE)
+  
+  # Create weight band ranges if weight bands are provided
+  if (!is.null(weight_bands)) {
+    weight_band_cases <- sapply(weight_bands, function(band) {
+      sprintf("EVID == 1 & TIME == 0 & FLOORED_WT >= %s & FLOORED_WT < %s ~ %s",
+              band$min, band$max, band$dose)
+    })
+    weight_band_expression <- paste(weight_band_cases, collapse = ",\n")
+  }
+  
+  NM_Allo <- Sim_data %>%
+    mutate(
+      FLOORED_HT = ((HT %/% 10) *10),
+      FLOORED_WT = floor(WT),
+      FFM_2005 = ifelse(SEX == 0,
+                        ((9.27e3 * FLOORED_WT) / (6.68e3 + 216 * (FLOORED_WT / ((FLOORED_HT / 100) ^ 2)))), 
+                        ((9.27e3 * FLOORED_WT) / (8.78e3 + 244 * (FLOORED_WT / ((FLOORED_HT / 100) ^ 2)))))
+    ) %>%
+    filter(FLOORED_WT < weight) 
+  
+  # Apply weight band-based AMT calculation if weight bands are provided
+  if (!is.null(weight_bands)) {
+    NM_Allo <- NM_Allo %>%
+      mutate(
+        AMT = eval(parse(text = sprintf("case_when(\n%s,\nTRUE ~ 0\n)", weight_band_expression))),
+        AMT = ifelse(EVID == 1 & TIME > 0 , case_when(
+          WT >= 45 ~ 150,
+          WT >= 30 & WT < 45 ~ 100,
+          WT < 30 ~ plyr::round_any(150 * (FFM_2005 / 53) ^ 0.75, 10)
+        ), AMT)
+      )
+  } else if (!is.null(fixed_load_dose)) {
+    # Use original AMT calculation if no weight bands
+    NM_Allo <- NM_Allo %>%
+      mutate(
+        AMT = ifelse(EVID == 1 & TIME > 0, case_when(
+          WT >= 45 ~ 150,
+          WT >= 30 & WT < 45 ~ 100,
+          WT < 30 ~ plyr::round_any(150 * (FFM_2005 / 53) ^ 0.75, 10)
+        ), AMT)
+      )
+  } else {
+    NM_Allo <- NM_Allo %>%
+      mutate(
+        AMT = ifelse(EVID == 1, case_when(
+          WT >= 45 ~ 150,
+          WT >= 30 & WT < 45 ~ 100,
+          WT < 30 ~ plyr::round_any(150 * (FFM_2005 / 53) ^ 0.75, 10)
+        ), 0),
+        SEX = as.numeric(SEX))
+  }
+  
+  NM_Allo <- NM_Allo %>%
+    mutate(AMT = ifelse(AMT == 90, 100, AMT)) %>%
+    dplyr::select(ID, TIME, EVID, CMT, II, ADDL, AMT, AGE, SEX, HT, WT, FFM) %>% 
+    arrange(ID, TIME)
+  
+  set.seed(seed) 
+  
+  allometric_ffm_model <- model %>% 
+    data_set(NM_Allo) %>%
+    carry.out(a.u.g) %>%
+    obsaug %>%
+    mrgsim(delta = 12, end = 1334) %>%
+    as.data.frame()
+  
+  allom_FFM_pk <- allometric_ffm_model %>%
+    group_by(TIME) %>%
+    summarise(
+      median = median(CONC_CENT, na.rm = TRUE),
+      p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
+      p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
+    mutate(
+      TIME = TIME / 24,
+      TYPE = "Allometric_FFM")
+  
+  allo_FFM_pk_stat <- pk_summary(allometric_ffm_model, treatment_duration)
+  
+  if(use_loading_dose == TRUE) {
+    allometric_ffm <- allometric_ffm_model %>% group_by(ID) %>%
+      filter(TIME > 0) %>%
+      mutate( AMT = max(AMT))
+  } else {
+    allometric_ffm <- allometric_ffm_model %>% group_by(ID) %>%
+      mutate( AMT = max(AMT))
+  }
+
+  
+  Allometric_FFM <- create_bin(allometric_ffm, Time = treatment_duration,weight)
+  
+  upper_ci_obs_AUC <- ifelse(type == "ref", round(quantile(Allometric_FFM$AUC, 0.95), 0), upper) 
+  lower_ci_obs_TOEC90 <-  ifelse(type == "ref", round(quantile(Allometric_FFM$TEC90, 0.05), 0), lower)
+  
+  AUC_TOEC90_Allometric_FFM <- AUC_TOEC90_summary(Allometric_FFM, upper_ci_obs_AUC, lower_ci_obs_TOEC90)
+  
+  # DOSE_summary <- AUC_TOEC90_Allometric_FFM %>%
+  #   group_by(across(c(starts_with("WT_BAND"), starts_with("DOSE")))) %>%
+  #   mutate(COUNT_BIN_dose = sum(COUNT_BIN)) %>%
+  #   distinct(ascross(c(starts_with("WT_BAND"), starts_with("DOSE"))), COUNT_BIN_dose, .keep_all = TRUE) %>%
+  #   group_by(across(c(starts_with("WT_BAND")))) %>%
+  #   filter(COUNT_BIN_dose == max(COUNT_BIN_dose)) %>%
+  #   select(starts_with("WT_BAND"), starts_with("DOSE")) 
+    
+  
+  
+  return(list(
+    AUC_TOEC90_Allometric_FFM = AUC_TOEC90_Allometric_FFM,
+    upper_ci_obs_AUC = upper_ci_obs_AUC,
+    lower_ci_obs_TOEC90 = lower_ci_obs_TOEC90,
+    pk_profile = allom_FFM_pk ,
+    stat_data = allo_FFM_pk_stat,
+    sumplot = Allometric_FFM,
+    treatment_duration = treatment_duration,
+    pk_model_output = allometric_ffm_model,
+    sens_df = NM_Allo
+    # DOSE_summary = DOSE_summary
+  ))
+}

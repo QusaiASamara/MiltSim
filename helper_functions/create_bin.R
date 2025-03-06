@@ -1,0 +1,52 @@
+get_mode <- function(x) {
+  unique_x <- unique(x)
+  unique_x[which.max(tabulate(match(x, unique_x)))]
+}
+
+create_bin <- function(data,Time, weight) {
+
+  data_name <- deparse(substitute(data))
+  
+  data <- data %>%
+    group_by(ID) %>%
+    mutate(TIME = TIME/24) %>%
+    filter(TIME == Time) %>%
+    mutate(
+      TEC90 = TEC90 / 24,
+      hazard = h/1.84,
+      AUC = AUC / 24,
+      BIN = floor(WT) ## floor or round??
+    ) %>%
+    filter(BIN < weight) %>%
+    ungroup() %>%
+    arrange(BIN, WT, AGE) %>%
+    mutate(
+      BINNED_WT = factor(case_when(
+        BIN < 6 ~ " < 06 kg",
+        BIN >= 6 & BIN < 10 ~ paste0("0", BIN, " kg"),
+        BIN >= 10 & BIN < 60 ~ paste0(BIN, " kg"),
+        BIN >= 60 ~ "60 kg +"
+      ))) %>%
+    group_by(BINNED_WT, FLAG) %>%
+    mutate(DOSE_G = round(get_mode(AMT), 1)) %>%
+    ungroup()  %>%
+    {
+      if (!startsWith(data_name, "Allometric_WB_custom")) {
+        mutate(.,!!paste0("WT_BAND_", data_name) := case_when(
+          BIN < 6 ~ "< 6 kg", 
+          BIN >= 6 & BIN < 10 ~ "06 to 09 kg", 
+          BIN >= 10 & BIN < 15 ~ "10 to 14 kg", 
+          BIN >= 15 & BIN < 20 ~ "15 to 19 kg", 
+          BIN >= 20 & BIN < 25 ~ "20 to 24 kg", 
+          BIN >= 25 & BIN < 30 ~ "25 to 29 kg", 
+          BIN >= 30 & BIN < 45 ~ "30 to 44 kg", 
+          BIN >= 45 ~ "45+ kg"
+        ))
+      } else {
+        .
+      }
+    } %>% 
+    arrange(ID)
+  
+  return(data)
+}
