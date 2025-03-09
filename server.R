@@ -177,7 +177,7 @@ server <- function(input, output, session) {
       subtitle = "Total Individuals count",
       icon = icon("id-badge"))
   })
-  
+  de
   output$gender_distribution <- renderValueBox({
     shiny::req(input$explore)
     data_list <- data()
@@ -253,7 +253,7 @@ server <- function(input, output, session) {
     
     upper_ci_obs_AUC_ref <- ref_data$upper_ci_obs_AUC
     lower_ci_obs_TOEC90_ref <- ref_data$lower_ci_obs_TOEC90
-    ref_sumplot <- ref_data$sumplot
+    # ref_sumplot <- ref_data$sumplot
     
     assign ("upper_ci_obs_AUC", if (!is.na(input$upp_limit) && input$custom_limit) {
       input$upp_limit
@@ -269,7 +269,7 @@ server <- function(input, output, session) {
     # 
     # assign("upper_ci_obs_AUC", upper_ci_obs_AUC, envir = .GlobalEnv)
     # assign("lower_ci_obs_TOEC90", lower_ci_obs_TOEC90, envir = .GlobalEnv)
-    assign("ref_data", ref_sumplot, envir = .GlobalEnv)
+    # assign("ref_data", ref_sumplot, envir = .GlobalEnv)
     
     
     # Iterate over each saved regimen
@@ -364,6 +364,7 @@ server <- function(input, output, session) {
                       selected = names(combined_regimens())[1])
   })
   
+  
   observeEvent(combined_regimens(), {
     shiny::req(combined_regimens())
     
@@ -377,10 +378,24 @@ server <- function(input, output, session) {
     shiny::req(combined_regimens())
     
     updateSelectInput(session,
-                      inputId = "pk_profiles_choice",
+                      inputId = "select_sum_plot_ref",
                       choices = names(combined_regimens()),
                       selected = names(combined_regimens())[1])
   })
+  
+  observeEvent(combined_regimens(), {
+    shiny::req(combined_regimens())
+    
+    updateSelectInput(session,
+                      inputId = "select_hazard_sumplot_ref",
+                      choices = names(combined_regimens()),
+                      selected = names(combined_regimens())[1])
+  })
+  
+  
+  
+  
+
   
   
   
@@ -391,6 +406,7 @@ server <- function(input, output, session) {
   
   output$target_attainment_plot <- renderPlotly({
     shiny::req(input$run_model)
+    shiny::req(input$tab_selected == "Pharmacokinetics")
     data_frames <- combined_regimens()
     
     
@@ -476,7 +492,10 @@ server <- function(input, output, session) {
     shiny::req(input$run_model)
     shiny::req(input$select_sum_plot)
     shiny::req(combined_regimens())
+    shiny::req(input$tab_selected == "Pharmacokinetics")
+    
     data_frames <- combined_regimens()
+    
     
     DOSE_datasets <- lapply(data_frames, function(lst) {
       lst[grep("^DOSE", names(lst))]
@@ -505,6 +524,8 @@ server <- function(input, output, session) {
   output$pk_profiles_plot <- renderPlotly({
     shiny::req(combined_regimens())
     shiny::req(input$select_sum_plot)
+    shiny::req(input$tab_selected == "Pharmacokinetics")
+    
     
     data_frames <- combined_regimens()
     
@@ -524,12 +545,12 @@ server <- function(input, output, session) {
     
     
     ggplotly(plot)
-  }) %>% bindCache(input$select_sum_plot, combined_regimens())
+  }) %>% bindCache(input$select_sum_plot, combined_regimens(),input$tab_selected == "Pharmacokinetics")
   
   output$pk_stat <- render_gt({
     shiny::req(combined_regimens())
     shiny::req(input$select_sum_plot)
-    
+    shiny::req(input$tab_selected == "Pharmacokinetics")
     
     data_frames <- combined_regimens()
     
@@ -627,7 +648,10 @@ server <- function(input, output, session) {
   output$hazard_sumplot <- renderPlot({
     shiny::req(input$run_model)
     shiny::req(input$select_hazard_sumplot)
+    shiny::req(input$select_hazard_sumplot_ref)
     shiny::req(combined_regimens())
+    shiny::req(input$tab_selected == "pd")
+    
     
     data_frames <- combined_regimens()
     
@@ -641,22 +665,35 @@ server <- function(input, output, session) {
     shiny::validate(
       shiny::need(!is.null(sumplot_datasets[[input$select_hazard_sumplot]]), 
                   "No data found for the selected regimen."),
-      shiny::need(!is.null(sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]]), 
-                  "No summary plot data found for the selected regimen.")
+      shiny::need(!is.null(sumplot_datasets[[input$select_hazard_sumplot_ref]]), 
+                  "No refernce data found for the selected regimen."),
     )
     
     sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]] <- sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]] %>%
-      rename_with(~ "WT_BAND", .cols = starts_with("WT_BAND"))
+      rename_with(~ "DOSE", .cols = starts_with("DOSE")) %>%
+      mutate(`DOSE (mg)` = as.factor(DOSE))
+    
+    ref_data <- sumplot_datasets[[input$select_hazard_sumplot_ref]][["sumplot"]]
+    
+    bounds <- calc_bounds(ref_data, "hazard")
     
     plot <- ggplot(sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]], 
-           aes(x = BINNED_WT, y = hazard, fill = WT_BAND)) +
-      geom_boxplot(alpha = 0.8, outlier.shape = 21, outlier.size = 2) +
+           aes(x = BINNED_WT, y = hazard, fill = `DOSE (mg)`)) +
+      geom_rect(
+        xmin = -Inf, xmax = Inf,
+        ymin = bounds[1], ymax = bounds[2],
+        fill = "lightyellow", alpha = 0.3
+      ) +
+      geom_boxplot(alpha = 0.8, outlier.shape = NA) +
       labs(
         title = "Relapse Hazard Ratio",
         subtitle = "Distribution of hazard ratios across weight bands at the end of treatment",
         x = "Weight (kg)",
         y = "Hazard Ratio",
-        caption = paste("regimen:", input$select_hazard_sumplot)) +
+        caption = paste(
+          "The yellow shaded area represents the Tukey's hinges range for ", input$select_hazard_sumplot_ref, ".\n",
+          "Box plots represent the distribution of relapse hazard ratio across weights for ", input$select_hazard_sumplot, " (excluding outliers)."
+        )) +
       theme_minimal() +
       theme(
         plot.title = element_text(face = "bold", size = 16),
@@ -668,11 +705,14 @@ server <- function(input, output, session) {
         legend.title = element_text(face = "bold"),
         panel.grid.major = element_line(color = "gray90"),
         panel.grid.minor = element_line(color = "gray95"),
-        plot.margin = margin(t = 20, r = 20, b = 20, l = 20)
+        plot.margin = margin(t = 20, r = 20, b = 20, l = 20),
+        plot.caption = element_text(hjust = 0)
+        
       )
     
     return(plot)
-  },res = 144) %>% bindCache(input$select_hazard_sumplot, combined_regimens())
+  },res = 144) %>% bindCache(input$select_hazard_sumplot,input$select_hazard_sumplot_ref,
+                             combined_regimens(),input$tab_selected == "pd")
   
   
   
@@ -683,6 +723,7 @@ server <- function(input, output, session) {
   output$combined_output <- renderUI({
     shiny::req(input$run_model)
     shiny::req(combined_regimens())
+    shiny::req(input$tab_selected == "Pharmacokinetics")
     
     data_frames <- combined_regimens()
     
@@ -714,29 +755,26 @@ server <- function(input, output, session) {
       regimen_name = regimens,
       lower_limit_TEC90 = lows,
       upper_limit_AUC = upps
-    ) %>%
-      mutate(TOTAL = 100 - ((100 - lower_limit_TEC90) + (100 - upper_limit_AUC)))
+    ) 
     
     table_html <- result_df %>%
       knitr::kable(
         col.names = c(
           "Regimen Name",
           "Lower Limit of T>EC90 (%)",
-          "Upper Limit of AUC (%)",
-          "Total (%)"
-        ),
-        align = c('l', 'c', 'c', 'c'),
+          "Upper Limit of AUC (%)"),
+        align = c('l', 'c', 'c'),
         digits = 2,
         format = "html"
       ) %>%
       kableExtra::kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+        bootstrap_options = c("striped", "hover", "condensed"),
         full_width = TRUE,
         position = "center"
       ) %>%
       kableExtra::row_spec(0, bold = TRUE, background = "#f8f9fa") %>%
       kableExtra::column_spec(1, bold = TRUE) %>%
-      kableExtra::add_header_above(c(" " = 1, "Target Attainment Metrics" = 3))
+      kableExtra::add_header_above(c(" " = 1, "Target Attainment Metrics" = 2))
     
     # Return as HTML
     HTML(table_html)
@@ -744,7 +782,9 @@ server <- function(input, output, session) {
   output$sum_plot <- renderPlot({
     shiny::req(input$run_model)
     shiny::req(input$select_sum_plot)
+    shiny::req(input$select_sum_plot_ref)
     shiny::req(combined_regimens())
+    shiny::req(input$tab_selected == "Pharmacokinetics")
     
     data_frames <- combined_regimens()
     
@@ -753,23 +793,23 @@ server <- function(input, output, session) {
       lst[grep("^sumplot", names(lst))]
     })
     
-    
     # Validate data exists for selected regimen
     shiny::validate(
       shiny::need(!is.null(sumplot_datasets[[input$select_sum_plot]]), 
                   "No data found for the selected regimen."),
-      shiny::need(!is.null(sumplot_datasets[[input$select_sum_plot]][["sumplot"]]), 
-                  "No summary plot data found for the selected regimen.")
+      shiny::need(!is.null(sumplot_datasets[[input$select_sum_plot_ref]]), 
+                  "No reference data found for the selected regimen.")
     )
     
     
     
-    plot <- target_attainment_sumplots(ref_data = ref_data,
+    plot <- target_attainment_sumplots(ref_data = sumplot_datasets[[input$select_sum_plot_ref]][["sumplot"]],
                                        binned_df = sumplot_datasets[[input$select_sum_plot]][["sumplot"]],
-                                       dosing_strategy = names(data_frames)[names(data_frames) == input$select_sum_plot])
+                                       dosing_strategy = names(data_frames)[names(data_frames) == input$select_sum_plot],
+                                       names(data_frames)[names(data_frames) == input$select_sum_plot_ref])
     
     return(plot)
-  },res = 144) %>% bindCache(input$select_sum_plot, combined_regimens())
+  },res = 144) %>% bindCache(input$select_sum_plot,input$select_sum_plot_ref, combined_regimens(),input$tab_selected == "Pharmacokinetics")
   
   output$tec90_limit <- renderValueBox({
     shiny::req(input$run_model)
