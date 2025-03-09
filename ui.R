@@ -213,15 +213,14 @@ fluidPage(
                  conditionalPanel(
                    condition = "input.tab_selected == 'Pharmacokinetics'",
                    div(class = "card shadow-sm p-3 mt-3",
-                       h4("Select regimen:", class = "text-primary mb-3"),
-                       selectInput("select_sum_plot", "Choose a regimen:", choices = NULL, selected = NULL)
+                       h4("Choose regimen:", class = "text-primary mb-3"),
+                       selectInput("select_sum_plot", "Select regimen:", choices = NULL, selected = NULL),
                    )
                  ),
-                 
                  conditionalPanel(
                    condition = "input.tab_selected == 'pd'",
                    div(class = "card shadow-sm p-3 mt-3",
-                       selectInput("select_hazard_sumplot", "Choose a regimen:", choices = NULL, selected = NULL)
+                       selectInput("select_hazard_sumplot", "Select regimen:", choices = NULL, selected = NULL),
                    )
                  )
                ),
@@ -293,11 +292,32 @@ fluidPage(
                      # Summary plot in third row
                      fluidRow(
                        column(12,
-                              div(class = "card shadow-sm mb-4",
-                                  div(class = "card-header bg-primary text-white",
-                                      h4("Target Attainment by Weight", class = "m-0")),
-                                  div(class = "card-body",
-                                      withSpinner(plotOutput("sum_plot", height = "500px"), type = 7)
+                              div(class = "card border-0 shadow-lg mb-4",
+                                  div(class = "card-header bg-primary text-white d-flex justify-content-between align-items-center py-3",
+                                      h4("Target Attainment by Weight", class = "m-0 fw-bold"),
+                                      helpText(class = "text-white-50 m-0", "Select reference regimen below")
+                                  ),
+                                  div(class = "card-body p-4",
+                                      div(class = "mb-3",
+                                          selectInput("select_sum_plot_ref", 
+                                                      label = NULL, 
+                                                      choices = NULL, 
+                                                      selected = NULL,
+                                                      width = "100%")
+                                      ),
+                                      tags$style(HTML("
+        #select_sum_plot_ref {
+          height: 45px;
+          font-size: 1.1rem;
+        }
+      ")),
+                                      div(class = "plot-container",
+                                          withSpinner(
+                                            plotOutput("sum_plot", height = "500px"), 
+                                            type = 7,
+                                            color = "#0d6efd"
+                                          )
+                                      )
                                   )
                               )
                        )
@@ -324,19 +344,40 @@ fluidPage(
                        )
                      )
                    ),
-                   
                    tabPanel(
                      title = "Pharmacodynamics",
                      value = "pd",
-                     div(class = "card shadow-sm",
-                         div(class = "card-header bg-primary text-white",
-                             h4("Pharmacodynamic Analysis", class = "m-0")),
-                         div(class = "card-body p-0",
-                             withSpinner(plotOutput("hazard_sumplot", height = "800px", width = "100%"), type = 7)
-                         )
+                     column(12,
+                            div(class = "card border-0 shadow-lg mb-4",
+                                div(class = "card-header bg-primary text-white d-flex justify-content-between align-items-center py-3",
+                                    h4("Pharmacodynamic Analysis", class = "m-0 fw-bold"),
+                                    helpText(class = "text-white-50 m-0", "Review hazard summary below")
+                                ),
+                                div(class = "card-body p-4",
+                                    div(class = "mb-3",
+                                        selectInput("select_hazard_sumplot_ref", 
+                                                    label = "Select reference regimen:", 
+                                                    choices = NULL, 
+                                                    selected = NULL,
+                                                    width = "100%")
+                                    ),
+                                    tags$style(HTML("
+                   #select_hazard_sumplot_ref {
+                     height: 45px;
+                     font-size: 1.1rem;
+                   }
+                 ")),
+                                    div(class = "plot-container",
+                                        withSpinner(
+                                          plotOutput("hazard_sumplot", height = "800px", width = "100%"),
+                                          type = 7,
+                                          color = "#0d6efd"
+                                        )
+                                    )
+                                )
+                            )
                      )
                    ),
-                   
                    tabPanel(
                      title = "pop PK-PD Model summary",
                      value = "pk_model_summary",
