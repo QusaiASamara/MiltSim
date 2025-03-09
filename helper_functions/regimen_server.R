@@ -15,7 +15,7 @@ regimen_server <- function(id) {
     
     # Custom doses reactive values
     custom_doses <- reactiveVal(list())
-   
+    
     observeEvent(input$add_regimen, {
       showModal(modalDialog(
         title = "Build Dosing Regimen",
@@ -75,7 +75,7 @@ regimen_server <- function(id) {
         )
       ))
     })
-
+    
     
     output$loading_dose_ui <- renderUI({
       if (length(weight_bands_load()) == 0) {
@@ -90,15 +90,15 @@ regimen_server <- function(id) {
       shiny::req(input$include_loading)
       
       tagList(
-      lapply(seq_along(weight_bands_load()), function(i) {  
-        band <- weight_bands_load()[[i]] 
-        fluidRow(
-          column(3, numericInput(ns(paste0("band_min_", i)), "Min Weight (kg)", value = band$min, min = 0)),
-          column(3, numericInput(ns(paste0("band_max_", i)), "Max Weight (kg)", value = band$max, min = 0)),
-          column(3, numericInput(ns(paste0("band_dose_", i)), "Loading Dose", value = band$dose, min = 0)),
-          column(3, actionButton(ns(paste0("remove_band_", i)), "Remove", class = "btn btn-outline-danger btn-sm"))
-        )
-      })
+        lapply(seq_along(weight_bands_load()), function(i) {  
+          band <- weight_bands_load()[[i]] 
+          fluidRow(
+            column(3, numericInput(ns(paste0("band_min_", i)), "Min Weight (kg)", value = band$min, min = 0)),
+            column(3, numericInput(ns(paste0("band_max_", i)), "Max Weight (kg)", value = band$max, min = 0)),
+            column(3, numericInput(ns(paste0("band_dose_", i)), "Loading Dose", value = band$dose, min = 0)),
+            column(3, actionButton(ns(paste0("remove_band_", i)), "Remove", class = "btn btn-outline-danger btn-sm"))
+          )
+        })
       )
     })
     
@@ -115,13 +115,13 @@ regimen_server <- function(id) {
       lapply(seq_along(weight_bands_load()), function(i) {
         observeEvent(input[[paste0("remove_band_", i)]], {
           weight_bands_load(weight_bands_load()[-i])         
-          }, ignoreInit = TRUE, once = TRUE)
+        }, ignoreInit = TRUE, once = TRUE)
       })
     })
     
     
-    observe({
-      shiny::req(input$dosing_strategy == "costum_allometric_WB")
+    observeEvent(c(input$num_flags, input$custom_weight_bands, input$dosing_strategy), {
+      if(input$dosing_strategy == "costum_allometric_WB") {
       shiny::req(input$num_flags)
       
       # Get weight bands
@@ -178,6 +178,7 @@ regimen_server <- function(id) {
           weight_bands = weight_bands_input,
           doses = doses
         ))
+      }
       }
     })
     
@@ -252,13 +253,13 @@ regimen_server <- function(id) {
       do.call(tagList, dose_inputs)
     })
     
-      
+    
     output$validation_message <- renderText({
       validation_message()
     })
     # Save regimen with proper custom dose handling
     observeEvent(input$save_regimen, {
-
+      
       # Reset validation message
       validation_message(NULL)
       
@@ -295,6 +296,42 @@ regimen_server <- function(id) {
         }
       }
       
+      if (input$dosing_strategy == "costum_allometric_WB") {
+        weight_bands_input <- if (!is.null(input$custom_weight_bands) && input$custom_weight_bands != "") {
+          strsplit(input$custom_weight_bands, ",")[[1]] %>% 
+            trimws() %>% 
+            sapply(function(band) {
+              if (!grepl("kg", band)) paste0(band, " kg") else band
+            })
+        } else {
+          c("0-6 kg", "6-10 kg", "10-15 kg", "15-20 kg", "20-25 kg", 
+            "25-30 kg", "30-45 kg", "45-100 kg")
+        }
+        
+        # Collect the actual current input values, not relying on the custom_doses() reactive
+        collected_doses <- vector("list", length(weight_bands_input))
+        
+        for(i in seq_along(weight_bands_input)) {
+          band <- weight_bands_input[i]
+          current_doses <- numeric(input$num_flags)
+          
+          for(j in 1:input$num_flags) {
+            input_id <- paste0("dose_", gsub("[^a-zA-Z0-9]", "_", band), "_", j)
+            if (!is.null(input[[input_id]])) {
+              current_doses[j] <- as.numeric(input[[input_id]])
+            }
+          }
+          
+          collected_doses[[i]] <- current_doses
+        }
+        custom_doses(list(
+          num_flags = input$num_flags,
+          weight_bands = weight_bands_input,
+          doses = collected_doses
+        ))
+      }
+      
+      
       new_regimen <- list(
         name = input$regimen_name,
         strategy = input$dosing_strategy,
@@ -312,7 +349,7 @@ regimen_server <- function(id) {
                 )
               })
             } else NULL         
-            )
+          )
         } else NULL,
         maintenance_dose = list(
           frequency = input$maint_freq,
@@ -391,7 +428,6 @@ regimen_server <- function(id) {
         regimens()[[length(regimens())]]  # Get the most recently added regimen
       })
     ))
-    })
+  })
   
 }
-
