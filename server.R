@@ -521,31 +521,99 @@ server <- function(input, output, session) {
   ####        pk profile plot      ####
   #####################################
   
+  observeEvent(input$customize_filter, {
+    showModal(modalDialog(
+      title = "Customize Filter",
+      selectInput("filter_type", "Filter by:", 
+                  choices = c("Weight" = "WT", "Age" = "AGE", "Clearance" = "CL", "Volume of Distribution" = "V"), 
+                  selected = "weight"),
+      numericInput("min_val", "Min Value:", value = NA, min = 0, step = NA),
+      numericInput("max_val", "Max Value:", value = NA, min = 0, step = NA),
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton("apply_filter", "Apply Filter")
+      )
+    ))
+  })
+  
+  # Reactive values to store filter settings
+  filter_settings <- reactiveValues(
+    filter_type = NULL,
+    min_val = NULL,
+    max_val = NULL
+  )
+  
+  # Handle the filter application in the server logic
+  observeEvent(input$apply_filter, {
+    # Validation
+    if (is.null(input$filter_type) || input$filter_type == "") {
+      showNotification("Please select a filter type.", type = "error")
+      return()
+    }
+    if (input$min_val < 0 || input$max_val <= 0) {
+      showNotification("Please enter numeric values greater than 0.", type = "error")
+      return()
+    }
+    if (input$min_val >= input$max_val) {
+      showNotification("Min Value should be less than Max Value.", type = "error")
+      return()
+    }
+    
+    filter_settings$filter_type <- input$filter_type
+    filter_settings$min_val <- input$min_val
+    filter_settings$max_val <- input$max_val
+    removeModal()
+  })
+  
   output$pk_profiles_plot <- renderPlotly({
     shiny::req(combined_regimens())
     shiny::req(input$select_sum_plot)
     shiny::req(input$tab_selected == "Pharmacokinetics")
     
-    
     data_frames <- combined_regimens()
     
     pk_profile_data <- lapply(data_frames, function(lst) {
-      lst[grep("^pk_profile", names(lst))]
+      lst[grep("^pk_model_output", names(lst))]
     })
     
     validate(
       need(pk_profile_data[[input$select_sum_plot]], "No PK profile data found for selected regimen"),
-      need(pk_profile_data[[input$select_sum_plot]][["pk_profile"]], "PK profile data is missing")
+      need(pk_profile_data[[input$select_sum_plot]][["pk_model_output"]], "PK profile data is missing")
     )
     
+    pk_profile_data <- pk_profile_data[[input$select_sum_plot]][["pk_model_output"]]
     
-    plot <- plot_pk_profiles(data = pk_profile_data[[input$select_sum_plot]][["pk_profile"]],
+    # Apply filter if filter_type is set
+    if (!is.null(filter_settings$filter_type)) {
+      filter_expr <-switch(filter_settings$filter_type,
+                           "WT" = quote(WT),
+                           "AGE" = quote(AGE),
+                           "CL" = quote(CL),
+                           "V" = quote(V),
+                           NULL)
+      
+      pk_profile_data <- pk_profile_data %>%
+        filter(!!filter_expr > filter_settings$min_val & !!filter_expr < filter_settings$max_val)
+    }
+    
+    pk_profile_data <- pk_profile_data %>%
+      group_by(ID) %>%
+      group_by(TIME) %>%
+      summarise(
+        median = median(CONC_CENT, na.rm = TRUE),
+        p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
+        p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
+      mutate(
+        TIME = TIME / 24,
+        TYPE = names(data_frames)[names(data_frames) == input$select_sum_plot])
+    
+    plot <- plot_pk_profiles(data = pk_profile_data,
                              log_y = FALSE, 
-                             treatment_duration = data_frames[[input$select_sum_plot]][["treatment_duration"]],use_loading_dose = F)
-    
+                             treatment_duration = data_frames[[input$select_sum_plot]][["treatment_duration"]], use_loading_dose = F)
     
     ggplotly(plot)
-  }) %>% bindCache(input$select_sum_plot, combined_regimens(),input$tab_selected == "Pharmacokinetics")
+  }) #%>% bindCache(input$select_sum_plot, combined_regimens(), input$tab_selected == "Pharmacokinetics", filter_settings())
+  
   
   output$pk_stat <- render_gt({
     shiny::req(combined_regimens())
