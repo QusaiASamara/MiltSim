@@ -316,7 +316,8 @@ fluidPage(
                                             plotOutput("sum_plot", height = "500px"), 
                                             type = 7,
                                             color = "#0d6efd"
-                                          )
+                                          ),
+                                          uiOutput("attainment_caption")
                                       )
                                   )
                               )
