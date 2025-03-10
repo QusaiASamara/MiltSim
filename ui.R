@@ -324,10 +324,13 @@ fluidPage(
                      ),
                      
                      fluidRow(
-                       column(7,
+                      column(7,
                               div(class = "card shadow-sm mb-4",
-                                  div(class = "card-header bg-primary text-white",
-                                      h4("PK Profile Visualization", class = "m-0")),
+                                  div(class = "card-header bg-primary text-white d-flex justify-content-between align-items-center",
+                                      h4("PK Profile Visualization", class = "m-0"),
+                                      actionButton("customize_filter", label = div(icon("sliders-h"), "Customize Filter"), 
+                                                   class = "btn btn-outline-light btn-sm")
+                                  ),
                                   div(class = "card-body",
                                       withSpinner(plotlyOutput("pk_profiles_plot", height = "500px"), type = 7)
                                   )
