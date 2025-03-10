@@ -878,6 +878,27 @@ server <- function(input, output, session) {
     
     return(plot)
   },res = 144) %>% bindCache(input$select_sum_plot,input$select_sum_plot_ref, combined_regimens(),input$tab_selected == "Pharmacokinetics")
+
+  output$attainment_caption <- renderUI({
+    shiny::req(input$run_model)
+    shiny::req(input$select_sum_plot)
+    shiny::req(input$select_sum_plot_ref)
+    shiny::req(combined_regimens())
+    shiny::req(input$tab_selected == "Pharmacokinetics")
+    
+    data_frames <- combined_regimens()
+    
+    caption_text <- HTML(paste0(
+      "The yellow shaded area represents the Tukey's hinges range for <b>",  
+      names(data_frames)[names(data_frames) == input$select_sum_plot_ref], 
+      "</b>.<br>",
+      "Box plots represent the distribution of AUC and TEC90 values across weights for <b>",  
+      names(data_frames)[names(data_frames) == input$select_sum_plot], 
+      "</b> (excluding outliers)."
+    ))
+    
+    return(caption_text)
+  })
   
   output$tec90_limit <- renderValueBox({
     shiny::req(input$run_model)
