@@ -710,80 +710,7 @@ server <- function(input, output, session) {
     }
   })
   
-  ###########################
-  ###   Pharmacodynamics  ###
-  ###########################
-  output$hazard_sumplot <- renderPlot({
-    shiny::req(input$run_model)
-    shiny::req(input$select_hazard_sumplot)
-    shiny::req(input$select_hazard_sumplot_ref)
-    shiny::req(combined_regimens())
-    shiny::req(input$tab_selected == "pd")
-    
-    
-    data_frames <- combined_regimens()
-    
-    
-    sumplot_datasets <- lapply(data_frames, function(lst) {
-      lst[grep("^sumplot", names(lst))]
-    })
-    
-    
-    # Validate data exists for selected regimen
-    shiny::validate(
-      shiny::need(!is.null(sumplot_datasets[[input$select_hazard_sumplot]]), 
-                  "No data found for the selected regimen."),
-      shiny::need(!is.null(sumplot_datasets[[input$select_hazard_sumplot_ref]]), 
-                  "No refernce data found for the selected regimen."),
-    )
-    
-    sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]] <- sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]] %>%
-      rename_with(~ "DOSE", .cols = starts_with("DOSE")) %>%
-      mutate(`DOSE (mg)` = as.factor(DOSE))
-    
-    ref_data <- sumplot_datasets[[input$select_hazard_sumplot_ref]][["sumplot"]]
-    
-    bounds <- calc_bounds(ref_data, "hazard")
-    
-    plot <- ggplot(sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]], 
-           aes(x = BINNED_WT, y = hazard, fill = `DOSE (mg)`)) +
-      geom_rect(
-        xmin = -Inf, xmax = Inf,
-        ymin = bounds[1], ymax = bounds[2],
-        fill = "lightyellow", alpha = 0.3
-      ) +
-      geom_boxplot(alpha = 0.8, outlier.shape = NA) +
-      labs(
-        title = "Relapse Hazard Ratio",
-        subtitle = "Distribution of hazard ratios across weight bands at the end of treatment",
-        x = "Weight (kg)",
-        y = "Hazard Ratio",
-        caption = paste(
-          "The yellow shaded area represents the Tukey's hinges range for ", input$select_hazard_sumplot_ref, ".\n",
-          "Box plots represent the distribution of relapse hazard ratio across weights for ", input$select_hazard_sumplot, " (excluding outliers)."
-        )) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(face = "bold", size = 16),
-        plot.subtitle = element_text(size = 12, color = "gray50"),
-        axis.title = element_text(face = "bold", size = 12),
-        axis.text = element_text(size = 10),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "top",
-        legend.title = element_text(face = "bold"),
-        panel.grid.major = element_line(color = "gray90"),
-        panel.grid.minor = element_line(color = "gray95"),
-        plot.margin = margin(t = 20, r = 20, b = 20, l = 20),
-        plot.caption = element_text(hjust = 0)
-        
-      )
-    
-    return(plot)
-  },res = 144) %>% bindCache(input$select_hazard_sumplot,input$select_hazard_sumplot_ref,
-                             combined_regimens(),input$tab_selected == "pd")
-  
-  
-  
+ 
   ###########################
   ###   Summary Table     ###
   ###########################
@@ -916,6 +843,78 @@ server <- function(input, output, session) {
       subtitle = "Limit of the higher boundary of AUC",
       icon = icon("chart-bar"))
   })
+
+    ###########################
+  ###   Pharmacodynamics  ###
+  ###########################
+ output$hazard_sumplot <- renderPlot({
+    shiny::req(input$run_model)
+    shiny::req(input$select_hazard_sumplot)
+    shiny::req(input$select_hazard_sumplot_ref)
+    shiny::req(combined_regimens())
+    shiny::req(input$tab_selected == "pd")
+    
+    
+    data_frames <- combined_regimens()
+    
+    
+    sumplot_datasets <- lapply(data_frames, function(lst) {
+      lst[grep("^sumplot", names(lst))]
+    })
+    
+    
+    # Validate data exists for selected regimen
+    shiny::validate(
+      shiny::need(!is.null(sumplot_datasets[[input$select_hazard_sumplot]]), 
+                  "No data found for the selected regimen."),
+      shiny::need(!is.null(sumplot_datasets[[input$select_hazard_sumplot_ref]]), 
+                  "No refernce data found for the selected regimen."),
+    )
+    
+    sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]] <- sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]] %>%
+      rename_with(~ "DOSE", .cols = starts_with("DOSE")) %>%
+      mutate(`DOSE (mg)` = as.factor(DOSE))
+    
+    ref_data <- sumplot_datasets[[input$select_hazard_sumplot_ref]][["sumplot"]]
+    
+    bounds <- calc_bounds(ref_data, "hazard")
+    
+    plot <- ggplot(sumplot_datasets[[input$select_hazard_sumplot]][["sumplot"]], 
+                   aes(x = BINNED_WT, y = hazard, fill = `DOSE (mg)`)) +
+      geom_rect(
+        xmin = -Inf, xmax = Inf,
+        ymin = bounds[1], ymax = bounds[2],
+        fill = "lightyellow", alpha = 0.3
+      ) +
+      geom_boxplot(alpha = 0.8, outlier.shape = NA) +
+      labs(
+        title = "Relapse Hazard Ratio",
+        subtitle = "Distribution of hazard ratios across weight bands at the end of treatment",
+        x = "Weight (kg)",
+        y = "Hazard Ratio",
+        caption = paste(
+          "The yellow shaded area represents the Tukey's hinges range for ", input$select_hazard_sumplot_ref, ".\n",
+          "Box plots represent the distribution of relapse hazard ratio across weights for ", input$select_hazard_sumplot, " (excluding outliers)."
+        )) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(face = "bold", size = 16),
+        plot.subtitle = element_text(size = 12, color = "gray50"),
+        axis.title = element_text(face = "bold", size = 12),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "top",
+        legend.title = element_text(face = "bold"),
+        panel.grid.major = element_line(color = "gray90"),
+        panel.grid.minor = element_line(color = "gray95"),
+        plot.margin = margin(t = 20, r = 20, b = 20, l = 20),
+        plot.caption = element_text(hjust = 0)
+        
+      )
+    
+    return(plot)
+  },res = 144) %>% bindCache(input$select_hazard_sumplot,input$select_hazard_sumplot_ref,
+                             combined_regimens(),input$tab_selected == "pd")
   
   
   ##############################
