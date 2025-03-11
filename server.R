@@ -4,15 +4,7 @@ server <- function(input, output, session) {
   ####    virtual population   ####
   #################################
   
-  observeEvent(input$details_pop, {
-    showModal(modalDialog(
-      title = "Simulation Settings Details",
-      "Here you can find more information about the simulation settings.",
-      easyClose = TRUE,
-      footer = modalButton("Close")
-    ))
-  })
-  
+
   observeEvent(input$show_inputs, {
     toggle("covariate_panel")
   })
