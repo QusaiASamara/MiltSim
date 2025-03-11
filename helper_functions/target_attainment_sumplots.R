@@ -33,7 +33,6 @@ target_attainment_sumplots <- function(ref_data, binned_df, dosing_strategy, ref
   # Create base theme once
   base_theme <- theme_bw() +
     theme(
-      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
       legend.position = "right"
     )
   
@@ -47,7 +46,6 @@ target_attainment_sumplots <- function(ref_data, binned_df, dosing_strategy, ref
       ) +
       geom_boxplot(color = "black", size = 0.5, outlier.shape = NA) +
       labs(
-        title = dosing_strategy,
         x = "Weight (kg)",
         y = ifelse(metric == "AUC", 
                    "AUC at EOT (mg*day/L)", 
@@ -59,13 +57,8 @@ target_attainment_sumplots <- function(ref_data, binned_df, dosing_strategy, ref
   
   # Create all plots efficiently
     p1 <- create_main_plot(binned_dt, "AUC", bounds$AUC, dosing_strategy)
-    p2 <- create_main_plot(binned_dt, "TEC90", bounds$TEC90, dosing_strategy) +
-      labs(caption = paste0(
-        "The yellow shaded area represents the Tukey's hinges range for ", ref_regimen_name, "\n",
-        "Box plots represent the distribution of AUC and TEC90 values across weights for ", dosing_strategy, " (excluding outliers)."
-      )) +
-      theme(plot.caption = element_text(hjust = 0.5, size = 7))
-
-
-    plot_grid(p1, p2, ncol = 1, align = "v")
+    p2 <- create_main_plot(binned_dt, "TEC90", bounds$TEC90, dosing_strategy) 
+    
+  plot_grid(p1, p2, ncol = 1, align = "v")
+    
 }
