@@ -166,15 +166,15 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
     mrgsim(delta = 12, end = 1334 ) %>%
     as.data.frame()
   
-  allom_WB_pk <- Allometric_WB_custom_model %>%
-    group_by(TIME) %>%
-    summarise(
-      median = median(CONC_CENT, na.rm = TRUE),
-      p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
-      p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
-    mutate(
-      TIME = TIME / 24,
-      TYPE = "Allometric_WB_custom")
+  #allom_WB_pk <- Allometric_WB_custom_model %>%
+   # group_by(TIME) %>%
+    #summarise(
+     # median = median(CONC_CENT, na.rm = TRUE),
+      #p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
+      #p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
+    #mutate(
+      #TIME = TIME / 24,
+      #TYPE = "Allometric_WB_custom")
   
   allo_cust_WB_pk_stat <- pk_summary(Allometric_WB_custom_model, treatment_duration)
   
@@ -228,7 +228,7 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
     select(starts_with("WT_BAND_Allometric_WB_custom"), starts_with("DOSE")) 
   
   return(list(AUC_TOEC90_Allo_WB_custom = AUC_TOEC90_Allo_WB_custom, 
-              pk_profile = allom_WB_pk,
+              pk_model_output = Allometric_WB_custom_model,
               stat_data = allo_cust_WB_pk_stat,
               sumplot = Allometric_WB_custom,
               DOSE_summary = DOSE_summary,
