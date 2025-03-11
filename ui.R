@@ -27,11 +27,7 @@ fluidPage(
             style = "display: flex; align-items: center; justify-content: space-between;",
             h4("Simulation Settings", 
                class = "text-primary mb-4", 
-               style = "color: #0056b3; margin-bottom: 0;"),
-            actionButton("details_pop", 
-                         label = div(icon("info-circle", class = "me-1"), "Details"),
-                         class = "btn btn-outline-info btn-sm",
-                         style = "border-radius: 20px; padding: 3px 12px;")
+               style = "color: #0056b3; margin-bottom: 0;")
           ),
           
           # Choice between predefined and imported dataset
