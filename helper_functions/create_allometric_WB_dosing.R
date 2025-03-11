@@ -119,15 +119,15 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
     mrgsim(delta = 12, end = 1334) %>%
     as.data.frame()
   
-  allom_WB_pk <- Allometric_WB_model %>%
-    group_by(TIME) %>%
-    summarise(
-      median = median(CONC_CENT, na.rm = TRUE),
-      p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
-      p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
-    mutate(
-      TIME = TIME / 24,
-      TYPE = "Allometric_WB")
+# allom_WB_pk <- Allometric_WB_model %>%
+  #   group_by(TIME) %>%
+  #   summarise(
+  #     median = median(CONC_CENT, na.rm = TRUE),
+  #     p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
+  #     p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
+  #   mutate(
+  #     TIME = TIME / 24,
+  #     TYPE = "Allometric_WB")
   
   Allo_WB_pk_stat <- pk_summary(Allometric_WB_model, treatment_duration)
   
@@ -165,7 +165,7 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
   
   
   return(list(AUC_TOEC90_Allo_WB = AUC_TOEC90_Allo_WB,
-              pk_profile = allom_WB_pk,
+              pk_model_output = Allometric_WB_model,
               stat_data = Allo_WB_pk_stat,
               sumplot = Allometric_WB,
               DOSE_summary = DOSE_summary,
