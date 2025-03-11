@@ -92,15 +92,15 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
     mrgsim(delta = 12, end = 1334) %>%
     as.data.frame()
   
-  conventional_pk <- Conventional_model %>%
-    group_by(TIME) %>%
-    summarise(
-      median = median(CONC_CENT, na.rm = TRUE),
-      p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
-      p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
-    mutate(
-      TIME = TIME / 24,
-      TYPE = "Conventional")
+  # conventional_pk <- Conventional_model %>%
+  #   group_by(TIME) %>%
+  #   summarise(
+  #     median = median(CONC_CENT, na.rm = TRUE),
+  #     p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
+  #     p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
+  #   mutate(
+  #     TIME = TIME / 24,
+  #     TYPE = "Conventional")
     
   conventional_pk_stat <- pk_summary(Conventional_model, treatment_duration)
   
@@ -128,7 +128,7 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
   #   select(starts_with("WT_BAND"), starts_with("DOSE")) 
   #   
   return(list(AUC_TOEC90_conventional = AUC_TOEC90_conventional,
-              pk_profile = conventional_pk,
+              pk_model_output = Conventional_model,
               stat_data = conventional_pk_stat,
               sumplot = conventional,
               treatment_duration = treatment_duration,
