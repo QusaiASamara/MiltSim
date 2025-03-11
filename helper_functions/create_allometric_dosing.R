@@ -105,15 +105,16 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
     mrgsim(delta = 12, end = 1334) %>%
     as.data.frame()
   
-  allom_FFM_pk <- allometric_ffm_model %>%
-    group_by(TIME) %>%
-    summarise(
-      median = median(CONC_CENT, na.rm = TRUE),
-      p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
-      p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
-    mutate(
-      TIME = TIME / 24,
-      TYPE = "Allometric_FFM")
+   # allom_FFM_pk <- allometric_ffm_model %>%
+  #   group_by(TIME) %>%
+  #   summarise(
+  #     median = median(CONC_CENT, na.rm = TRUE),
+  #     p5 = quantile(CONC_CENT, 0.05, na.rm = TRUE),
+  #     p95 = quantile(CONC_CENT, 0.95, na.rm = TRUE)) %>%
+  #   mutate(
+  #     TIME = TIME / 24,
+  #     TYPE = "Allometric_FFM")
+  
   
   allo_FFM_pk_stat <- pk_summary(allometric_ffm_model, treatment_duration)
   
@@ -148,7 +149,6 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
     AUC_TOEC90_Allometric_FFM = AUC_TOEC90_Allometric_FFM,
     upper_ci_obs_AUC = upper_ci_obs_AUC,
     lower_ci_obs_TOEC90 = lower_ci_obs_TOEC90,
-    pk_profile = allom_FFM_pk ,
     stat_data = allo_FFM_pk_stat,
     sumplot = Allometric_FFM,
     treatment_duration = treatment_duration,
