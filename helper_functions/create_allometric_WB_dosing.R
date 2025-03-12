@@ -116,7 +116,7 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
     data_set(All_WB_data) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim(delta = 12, end = 1334) %>%
+    mrgsim(delta = 12, end = 1368) %>%
     as.data.frame()
   
 # allom_WB_pk <- Allometric_WB_model %>%
