@@ -169,7 +169,7 @@ server <- function(input, output, session) {
       subtitle = "Total Individuals count",
       icon = icon("id-badge"))
   })
-  de
+  
   output$gender_distribution <- renderValueBox({
     shiny::req(input$explore)
     data_list <- data()
