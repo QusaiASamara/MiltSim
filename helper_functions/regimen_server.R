@@ -95,7 +95,7 @@ regimen_server <- function(id) {
           fluidRow(
             column(3, numericInput(ns(paste0("band_min_", i)), "Min Weight (kg)", value = band$min, min = 0)),
             column(3, numericInput(ns(paste0("band_max_", i)), "Max Weight (kg)", value = band$max, min = 0)),
-            column(3, numericInput(ns(paste0("band_dose_", i)), "Loading Dose", value = band$dose, min = 0)),
+            column(3, numericInput(ns(paste0("band_dose_", i)), "Dose (mg)", value = band$dose, min = 0)),
             column(3, actionButton(ns(paste0("remove_band_", i)), "Remove", class = "btn btn-outline-danger btn-sm"))
           )
         })
@@ -206,53 +206,120 @@ regimen_server <- function(id) {
           "25-30 kg", "30-45 kg", "45-100 kg")
       }
       
-      # Create dose inputs
-      dose_inputs <- lapply(seq_along(weight_bands_input), function(i) {
-        band <- weight_bands_input[i]
+      # Determine the total width needed
+      # Width for each column (in pixels)
+      col_width <- 120
+      weight_band_width <- 120
+      # Total width needed in pixels
+      total_width <- weight_band_width + (col_width * (input$num_flags + 2))
+      
+      # Create the table with fixed widths
+      table_html <- div(
+        class = "table-responsive",
+        style = paste0("min-width: 100%; overflow-x: auto;"),
         
-        # Get current values for this band if they exist
-        current_band_values <- if (!is.null(current_doses) && i <= length(current_doses)) {
-          current_doses[[i]]
-        } else {
-          NULL
-        }
-        
-        fluidRow(
-          column(4, h5(band)),
-          lapply(1:input$num_flags, function(j) {
-            value <- if (!is.null(current_band_values) && j <= length(current_band_values)) {
-              current_band_values[j]
-            } else {
-              # Default values based on weight band
-              default_values <- list(
-                c(20, 30, 40),  # 0-6 kg
-                c(20, 30, 40),  # 6-10 kg
-                c(40, 50, 60),  # 10-15 kg
-                c(50, 60, 70),  # 15-20 kg
-                c(60, 70, 80),  # 20-25 kg
-                c(70, 80, 100), # 25-30 kg
-                c(80, 100, 150),# 30-45 kg
-                c(90, 100, 150) # 45-100 kg
+        div(
+          style = paste0("width: ", total_width, "px; min-width: ", total_width, "px;"),
+          
+          # Header row
+          div(
+            class = "row bg-light py-2 mb-2 font-weight-bold",
+            style = "margin: 0;",
+            
+            div(
+              class = "col px-2 text-center",
+              style = paste0("width: ", weight_band_width, "px; min-width: ", weight_band_width, "px; max-width: ", weight_band_width, "px;"),
+              "Weight Band"
+            ),
+            
+            # Dose headers
+            lapply(1:input$num_flags, function(j) {
+              div(
+                class = "col px-2 text-center",
+                style = paste0("width: ", col_width, "px; min-width: ", col_width, "px; max-width: ", col_width, "px;"),
+                paste0("Dose ", j)
               )
-              if (i <= length(default_values) && j <= length(default_values[[i]])) {
-                default_values[[i]][j]
-              } else {
-                NA
-              }
+            }),
+          ),
+          
+          # Data rows
+          lapply(seq_along(weight_bands_input), function(i) {
+            band <- weight_bands_input[i]
+            
+            # Get current values for this band if they exist
+            current_band_values <- if (!is.null(current_doses) && i <= length(current_doses)) {
+              current_doses[[i]]
+            } else {
+              NULL
             }
             
-            column(2, numericInput(
-              ns(paste0("dose_", gsub("[^a-zA-Z0-9]", "_", band), "_", j)),
-              NULL,
-              value = value, min = 0
-            ))
+            # Define default values
+            default_values <- list(
+              c(20, 30, 40),  # 0-6 kg
+              c(20, 30, 40),  # 6-10 kg
+              c(40, 50, 60),  # 10-15 kg
+              c(50, 60, 70),  # 15-20 kg
+              c(60, 70, 80),  # 20-25 kg
+              c(70, 80, 100), # 25-30 kg
+              c(80, 100, 150),# 30-45 kg
+              c(90, 100, 150) # 45-100 kg
+            )
+            
+            # Create alternating row background
+            row_class <- if(i %% 2 == 0) "bg-white" else "bg-light"
+            
+            div(
+              class = paste("row py-2 mb-1", row_class),
+              style = "margin: 0;",
+              
+              # Weight band column
+              div(
+                class = "col px-2 d-flex align-items-center",
+                style = paste0("width: ", weight_band_width, "px; min-width: ", weight_band_width, "px; max-width: ", weight_band_width, "px;"),
+                div(class = "font-weight-bold py-1 text-center w-100", band)
+              ),
+              
+              # Dose columns
+              lapply(1:input$num_flags, function(j) {
+                value <- if (!is.null(current_band_values) && j <= length(current_band_values)) {
+                  current_band_values[j]
+                } else {
+                  if (i <= length(default_values) && j <= length(default_values[[i]])) {
+                    default_values[[i]][j]
+                  } else {
+                    NA
+                  }
+                }
+                
+                div(
+                  class = "col px-2",
+                  style = paste0("width: ", col_width, "px; min-width: ", col_width, "px; max-width: ", col_width, "px;"),
+                  numericInput(
+                    ns(paste0("dose_", gsub("[^a-zA-Z0-9]", "_", band), "_", j)),
+                    NULL,
+                    value = value, 
+                    min = 0
+                  )
+                )
+              })
+            )
           })
         )
-      })
+      )
       
-      do.call(tagList, dose_inputs)
+      # Combine into a card
+      div(
+        class = "card shadow-sm",
+        div(
+          class = "card-header bg-primary text-white",
+          h4("Custom Dose Configuration", class = "mb-0")
+        ),
+        div(
+          class = "card-body p-3",
+          table_html
+        )
+      )
     })
-    
     
     output$validation_message <- renderText({
       validation_message()
