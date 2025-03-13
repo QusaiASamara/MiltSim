@@ -398,8 +398,11 @@ regimen_server <- function(id) {
         ))
       }
       
+      regimen_id <- paste0("regimen_", format(Sys.time(), "%Y%m%d%H%M%S"), "_", sample(1000:9999, 1))
+      
       
       new_regimen <- list(
+        id = regimen_id,
         name = input$regimen_name,
         strategy = input$dosing_strategy,
         loading_dose = if (input$include_loading) {
@@ -445,48 +448,117 @@ regimen_server <- function(id) {
       if (length(regimens()) == 0) return(NULL)
       
       tagList(
-        h4(class = "mb-3 text-primary", "Saved Regimens"),  # Section title
-        lapply(seq_along(regimens()), function(i) {
-          regimen <- regimens()[[i]]
-          
-          div(
-            class = "card shadow-sm border-0 mb-2 px-3 py-2",  # Modern styling
-            div(
-              class = "card-body p-2",
-              fluidRow(
-                column(
-                  width =8,  # Text occupies most of the row
-                  h5(class = "card-title mb-0 text-dark fw-bold", regimen$name),
-                  p(class = "card-text text-muted small mb-0", regimen$strategy)
-                ),
-                column(
-                  width = 1,  # Small column for the X button
-                  class = "d-flex justify-content-end align-items-center",  
-                  actionButton(
-                    ns(paste0("delete_regimen_", i)), 
-                    HTML("<i class='fa fa-times'></i>"), 
-                    class = "btn btn-outline-danger btn-sm p-1"
-                  )
+        h4(class = "mb-3 text-primary", "Saved Regimens"),
+        div(class = "regimen-container", style = "max-height: 600px; overflow-y: auto;",
+            lapply(seq_along(regimens()), function(i) {
+              regimen <- regimens()[[i]]
+              regimen_id <- regimen$id  
+              
+              # Format loading dose info
+              loading_info <- if (!is.null(regimen$loading_dose)) {
+                paste0(
+                  "<strong>Loading: </strong>", 
+                  regimen$loading_dose$frequency, " dose", 
+                  ifelse(regimen$loading_dose$frequency > 1, "s", ""),
+                  " every ", regimen$loading_dose$interval, " hours"
+                )
+              } else {
+                "<strong>Loading: </strong>None"
+              }
+              
+              # Format maintenance dose info
+              maint_info <- paste0(
+                "<strong>Maintenance: </strong>", 
+                regimen$maintenance_dose$frequency, " dose",
+                ifelse(regimen$maintenance_dose$frequency > 1, "s", ""), 
+                " every ", regimen$maintenance_dose$interval, " hours"
+              )
+              
+              # Format strategy
+              strategy_label <- switch(regimen$strategy,
+                                       "Allometric_FFM" = "Allometric (Fat-Free Mass-based)",
+                                       "Allometric_WB" = "Allometric (Weight band-Based)",
+                                       "Conventional" = "Conventional (mg/kg)",
+                                       "costum_allometric_WB" = "Custom Allometric (Weight band-Based)",
+                                       regimen$strategy
+              )
+              
+              div(
+                class = "card shadow mb-3 border-left-primary",
+                style = "border-left: 4px solid #4e73df;",
+                div(
+                  class = "card-body py-3",
+                  div(
+                    class = "d-flex justify-content-between align-items-start mb-2",
+                    div(
+                      h5(class = "card-title mb-0 text-primary font-weight-bold", regimen$name),
+                      p(class = "text-muted small mb-0", 
+                        tags$span(class = "badge bg-light text-dark", strategy_label))
+                    ),
+                    actionButton(
+                      ns(paste0("delete_", regimen_id)), 
+                      HTML("<i class='fa fa-trash'></i>"), 
+                      class = "btn btn-outline-danger btn-sm",
+                      title = "Delete Regimen"
+                    )
+                  ),
+                  hr(class = "my-2"),
+                  div(
+                    class = "row regimen-details",
+                    div(
+                      class = "col-md-6",
+                      HTML(loading_info)
+                    ),
+                    div(
+                      class = "col-md-6", 
+                      HTML(maint_info)
+                    )
+                  ),
+                  
+                  # Additional details for custom weight bands if applicable
+                  if (!is.null(regimen$custom_doses)) {
+                    div(
+                      class = "mt-2 pt-2 border-top small",
+                      p(class = "mb-1", tags$strong("Custom Dosing:"), 
+                        paste0(" ", length(regimen$custom_doses$weight_bands), " weight bands with ", 
+                               regimen$custom_doses$num_flags, " dose level", 
+                               ifelse(regimen$custom_doses$num_flags > 1, "s", ""), " each")
+                      )
+                    )
+                  } else if (!is.null(regimen$loading_dose$weight_bands)) {
+                    div(
+                      class = "mt-2 pt-2 border-top small",
+                      p(class = "mb-1", tags$strong("Weight Bands:"), 
+                        paste0(" ", length(regimen$loading_dose$weight_bands), " custom loading dose bands")
+                      )
+                    )
+                  } else NULL
                 )
               )
-            )
-          )
-        })
+            })
+        )
       )
     })
     
     
     # Delete a regimen
     observe({
-      lapply(seq_along(regimens()), function(i) {
-        observeEvent(input[[paste0("delete_regimen_", i)]], {
-          updated_regimens <- regimens()
-          updated_regimens <- updated_regimens[-i]  # Properly remove the regimen at index i
-          regimens(updated_regimens)  # Update the reactiveVal with the new list
-        }, ignoreInit = TRUE, once = TRUE)
-      })
+      for (i in seq_along(regimens())) {
+        regimen <- regimens()[[i]]
+        regimen_id <- regimen$id
+        
+        # Create a local function to handle the deletion
+        local({
+          local_id <- regimen_id
+          observeEvent(input[[paste0("delete_", local_id)]], {
+            current_regimens <- regimens()
+            # Find the regimen with this ID and remove it
+            to_keep <- sapply(current_regimens, function(r) r$id != local_id)
+            regimens(current_regimens[to_keep])
+          }, ignoreInit = TRUE)
+        })
+      }
     })
-    
     
     return(list(
       regimens = regimens,
