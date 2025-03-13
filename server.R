@@ -384,13 +384,6 @@ server <- function(input, output, session) {
                       selected = names(combined_regimens())[1])
   })
   
-  
-  
-  
-
-  
-  
-  
   #####################################
   ####    target attainment plot   ####
   #####################################
