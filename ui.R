@@ -245,18 +245,18 @@ fluidPage(
                        ),
                        column(4,
                               div(class = "h-100 d-flex flex-column justify-content-between",
-                                  div(class = "card shadow-sm mb-3",
-                                      div(class = "card-header bg-info text-white",
-                                          h5("TEC90 Limit", class = "m-0")),
-                                      div(class = "card-body",
-                                          valueBoxOutput("tec90_limit", width = NULL)
-                                      )
-                                  ),
-                                  div(class = "card shadow-sm",
+                                 div(class = "card shadow-sm",
                                       div(class = "card-header bg-info text-white",
                                           h5("AUC Limit", class = "m-0")),
                                       div(class = "card-body",
                                           valueBoxOutput("auc_limit", width = NULL)
+                                      )
+                                  ),
+                                   div(class = "card shadow-sm mb-3",
+                                      div(class = "card-header bg-info text-white",
+                                          h5("TEC90 Limit", class = "m-0")),
+                                      div(class = "card-body",
+                                          valueBoxOutput("tec90_limit", width = NULL)
                                       )
                                   )
                               )
