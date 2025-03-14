@@ -36,13 +36,15 @@ fluidPage(
                                        "Import Population" = "import"),
                            inline = TRUE), 
               class = "mb-4"),
+          hr(),
           
           # Settings for predefined population
           conditionalPanel(
             condition = "input.population_type == 'predefined'",
             selectInput("population", "Select Population",
-                        choices = c("Pediatric Eastern African Virtual Population", "WHO Virtual Population"), 
+                        choices = c("Pediatric Eastern African Virtual VL Population", "WHO Virtual Population"), 
                         width = "100%"),
+            hr(),
             radioGroupButtons(
               inputId = "age_unit",
               label = "Age Unit",
@@ -51,6 +53,7 @@ fluidPage(
               checkIcon = list(yes = icon("check-circle"))),
             numericInput("subj_num", "Individuals per Age Unit", 
                          value = 10, min = 1, step = 1, width = "100%"),
+            hr(),
             div(materialSwitch("use_seed", "Reproduce Population", value = FALSE), class = "mt-3"),
             conditionalPanel(
               condition = "input.use_seed == true",
@@ -177,13 +180,13 @@ fluidPage(
                      h4("Build Dosing Regimen", class = "text-primary"),
                      tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css")),
                      regimen_modal_ui("regimen"),
-                     
+                     hr(),
                      numericInput(
                        inputId = "weight",
                        label = "Maximum included weight (kg) in the analysis",
                        value = 30
                      ),
-                     
+                     hr(),
                      materialSwitch("custom_limit", "Use Custom limits", value = FALSE),
                      conditionalPanel(
                        condition = "input.custom_limit == true",
@@ -411,13 +414,13 @@ fluidPage(
               h4("Build Dosing Regimen", class = "text-primary"),
               tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css")),
               regimen_modal_ui_sens("regimen_sens"),
-              
+              hr(),
               numericInput(
                 inputId = "weight_sens",
                 label = "Maximum included weight (kg) in the analysis",
                 value = 30
               ),
-              
+              hr(),
               materialSwitch("custom_limit_sens", "Use Custom limits", value = FALSE),
               conditionalPanel(
                 condition = "input.custom_limit_sens == true",
