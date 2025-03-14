@@ -56,7 +56,7 @@ server <- function(input, output, session) {
       
       # Load data based on selected population
       data_list <- switch(input$population,
-                          "Pediatric Eastern African Virtual Population" = do.call(load_East_Africa_pop, params),
+                          "Pediatric Eastern African Virtual VL Population" = do.call(load_East_Africa_pop, params),
                           "WHO Virtual Population" = do.call(load_WHO_pop, params))
       
       return(data_list)
