@@ -125,7 +125,7 @@ server <- function(input, output, session) {
                    aes(color = GENDER), show.legend = FALSE,
                    position = position_nudge(x = rain_height * 3)) +
       # Faceting by metric; adjust the facet variable if needed
-      facet_wrap(~ METRIC, nrow = 3,scales = "free_x") +
+      facet_wrap(~ METRIC, nrow = 3,scales = "free_y") +
       # X-axis: minimal since we are using coord_flip()
       scale_x_discrete(name = "", expand = c(rain_height * 3, 0, 0, 0.7)) +
       # Y-axis: using pretty breaks based on data
@@ -139,9 +139,9 @@ server <- function(input, output, session) {
       # Add a caption with a description of the plot
       labs(
         caption = "The flat violins (clouds) represent the full distribution of each covariate, 
-        the individual dots indicate the raw data points, the boxplots summarize the distribution 
-        (median and interquartile range), and the point-range markers within the clouds display the 
-        mean and its standard error.") +
+    the individual dots indicate the raw data points, the boxplots summarize the distribution 
+    (median and interquartile range), and the point-range markers within the clouds display the 
+    mean and its standard error.") +
       # Use a minimal theme with professional touches
       theme_minimal(base_size = 12) +
       theme(
@@ -154,11 +154,42 @@ server <- function(input, output, session) {
         axis.title.y = element_blank(),                    # Remove Y-axis title if desired
         axis.text = element_text(color = "gray20"),
         # Adjust the caption appearance
-        plot.caption = element_text(size = 12, face = "italic", hjust = 0)
+        plot.caption = element_text(size = 12, face = "italic", hjust = 0),
+        plot.caption.position = "panel",                     # Position caption below the panel
+        
       )
     
   }) 
   
+  output$age_metric_plot <- renderPlot({
+    shiny::req(input$explore)
+    data_list <- data()
+    
+    ggplot(data_list$WHO_data_HT_WT_FFM_long, aes(x = AGE, y = VAL, color = GENDER)) +
+      geom_point(alpha = 0.1, size = 1.5) +
+      geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), 
+                  se = TRUE, level = 0.95) +
+      facet_wrap(~METRIC, scales = "free_y") +
+      theme_minimal() +
+      labs(
+        x = "Age (years)",
+        y = "Value",
+        color = "Gender"
+      ) +
+      theme(
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_line(color = "gray90"),  # Lighten major grid lines
+        panel.grid.major.y = element_line(color = "gray90"),
+        legend.position = "bottom",
+        strip.text = element_text(face = "bold", size = 14),  # Larger facet labels
+        strip.background = element_rect(fill = "gray95", color = NA),  # Light background for facet labels
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
+        plot.margin = margin(t = 10, r = 15, b = 10, l = 10),  # Add some breathing room
+        axis.title = element_text(face = "bold"),  # Bold axis titles
+        legend.title = element_text(face = "bold")  # Bold legend title
+      )
+    
+  })
   
   output$id_count <- renderValueBox({
     shiny::req(input$explore)
@@ -181,6 +212,8 @@ server <- function(input, output, session) {
       icon = icon("venus-mars"),
     )
   })
+  
+  
   
   output$demographics_map <- renderLeaflet({
     shiny::req(

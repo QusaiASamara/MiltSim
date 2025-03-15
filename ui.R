@@ -145,7 +145,11 @@ fluidPage(
               fluidRow(
                 column(4, valueBoxOutput("id_count", width = NULL)),
                 column(8, valueBoxOutput("gender_distribution", width = NULL))
-              )
+              ),
+              hr(),
+              fluidRow(
+                withSpinner(plotOutput("age_metric_plot", height = "600px"), type = 7),
+                )
             ),
             tabPanel(
               "Demographics Map",
