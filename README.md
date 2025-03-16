@@ -1,48 +1,58 @@
-# Miltsim
-Miltefosine Dose Optimization and Population Analysis
+# Miltsim  
+**Miltefosine Dose Optimization and Population Analysis**  
 
-## Shiny Application
+## Overview  
+Miltsim is a Shiny application designed to optimize Miltefosine dosing and perform population-level pharmacokinetic and pharmacodynamic (PK/PD) analyses. The interactive interface allows users to:  
 
-This project includes a Shiny application designed for Miltefosine dose optimization and population analysis. The application provides an interactive interface for users to:
+- Enter patient-specific data  
+- Visualize dose-response relationships  
+- Simulate various dosing regimens  
+- Analyze population-level PK/PD data to identify trends and improve treatment strategies  
 
-- Input patient-specific data
-- Visualize dose-response relationships
-- Simulate different dosing regimens
-- Analyze population-level pharmacokinetic and pharmacodynamic data
+## Features  
 
-### Features
+- **Patient Data Input**: Enter key patient details such as age, weight, and height.  
+- **Dose-Response Visualization**: Generate interactive plots to observe how different doses impact patient outcomes.  
+- **Dosing Simulations**: Test and compare various dosing regimens to determine the most effective treatment for different patient groups.  
+- **Population Analysis**: Examine aggregated PK/PD data to optimize dosing strategies at a broader level.  
 
-- **Patient Data Input**: Users can enter patient-specific information such as age, weight, height.
-- **Dose-Response Visualization**: Interactive plots to visualize how different doses affect patient outcomes.
-- **Dosing Simulations**: Simulate various dosing regimens to find the optimal dose for different patient groups.
-- **Population Analysis**: Analyze data across a population to identify trends and optimize dosing strategies.
+## Getting Started  
 
-### Getting Started
+Follow these steps to run the Shiny application:  
 
-To run the Shiny application, follow these steps:
+1. Install **R** and the **Shiny** package if not already installed.  
+2. Clone this repository to your local machine:  
 
-1. Ensure you have R and Shiny installed on your system.
-2. Clone this repository to your local machine.
-3. Open the R project file in RStudio.
-4. Run the Shiny application using the following command in the R console:
+   ```sh  
+   git clone https://github.com/QusaiASamara/Miltsim.git  
+   cd Miltsim  
+   ```  
+3. Open the R project file in RStudio.  
+4. Install required dependencies (see below).  
+5. Launch the Shiny application using the following command in the R console:  
 
-    ```R
-    shiny::runApp('path/to/shiny/app')
-    ```
+   ```r  
+   shiny::runApp('path/to/shiny/app')  
+   ```  
 
-Replace `'path/to/shiny/app'` with the actual path to the Shiny application directory.
+   *(Replace `'path/to/shiny/app'` with the actual directory path of the application.)*  
 
-### Dependencies
+## Dependencies  
 
-The Shiny application relies on the following R packages:
+The required R packages are listed in the [`global.R`](https://github.com/QusaiASamara/Miltsim/blob/main/global.R) file. Install them before running the application:  
 
-- `shiny`
-- `ggplot2`
-- `dplyr`
-- `tidyr`
+```r  
+install.packages(c("shiny", "ggplot2", "dplyr", "tidyr", "shinyWidgets", "DT"))  
+```  
 
-Make sure to install these packages before running the application.
+*(Modify the package list as needed based on `global.R`.)*  
 
-### Contributing
+## Contributing  
 
-We welcome contributions to improve the Shiny application. Please fork the repository and submit pull requests with your changes.
+We welcome contributions! To contribute:  
+
+1. Fork this repository.  
+2. Create a new branch for your changes.  
+3. Submit a pull request with a clear description of your improvements.  
+
+For any questions, feel free to open an issue.  
