@@ -1,133 +1,248 @@
 fluidPage(
   useShinyjs(),
-  # Use a more modern theme
-  theme = bslib::bs_theme(bootswatch = "flatly"),
+  # Use a more modern theme with custom color palette
+  theme = bslib::bs_theme(
+    bootswatch = "flatly",
+    primary = "#2C3E50",
+    secondary = "#95a5a6",
+    success = "#18BC9C",
+    info = "#3498DB",
+    warning = "#F39C12",
+    danger = "#E74C3C"
+  ),
+  
+  # Custom CSS for enhanced styling
+  tags$head(
+    tags$style(HTML("
+      .app-header {
+        background: linear-gradient(135deg, #2C3E50 0%, #3498DB 100%);
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      .app-title {
+        font-weight: 700; 
+        letter-spacing: 0.5px;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+      }
+      .card {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+      }
+      .card-body {
+      overflow: visible !important;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0,0,0,0.1);
+      }
+      .card-header {
+        border-bottom: none;
+        padding: 1rem 1.25rem;
+      }
+      .btn-primary, .btn-secondary, .btn-success {
+        border-radius: 6px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+      }
+      .btn-primary:hover, .btn-secondary:hover, .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      }
+      .value-box {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      }
+      .nav-pills .nav-link {
+        border-radius: 6px;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+      }
+      .nav-pills .nav-link.active {
+        background-color: #2C3E50;
+      }
+      .tab-content {
+        padding-top: 1.5rem;
+      }
+      .form-control, .selectize-input {
+        border-radius: 6px;
+        border: 1px solid #ddd;
+      }
+      #covariate_panel {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+      }
+      .spinner-grow {
+        color: #3498DB !important;
+      }
+    "))
+  ),
   
   # Application Title with improved styling
   div(
-    class = "container-fluid bg-primary text-white py-3 mb-4",
+    class = "app-header",
     div(
-      class = "row justify-content-center",
+      class = "container-fluid",
       div(
-        class = "col-md-10",
-        h1("Miltefosine Dose Optimization and Population Analysis", 
-           class = "text-center m-0",
-           style = "font-weight: 700; letter-spacing: 0.5px;")
+        class = "row justify-content-center",
+        div(
+          class = "col-md-10",
+          h1("Miltefosine Dose Optimization and Population Analysis", 
+             class = "text-center text-white app-title m-0")
+        )
       )
     )
   ),
   
+  # Main navigation with larger, more distinct tabs
   tabsetPanel(
+    id = "main_tabs",
     type = "pills",
     tabPanel(
-      "Population Simulation",
+      div(icon("users"), "Population Simulation"),
       sidebarLayout(
         sidebarPanel(
+          width = 3,
           div(
-            style = "display: flex; align-items: center; justify-content: space-between;",
-            h4("Simulation Settings", 
-               class = "text-primary mb-4", 
-               style = "color: #0056b3; margin-bottom: 0;")
-          ),
-          
-          # Choice between predefined and imported dataset
-          div(radioButtons("population_type", "Population Type", 
+            class = "card mb-4",
+            div(
+              class = "card-header bg-primary text-white",
+              h4("Simulation Settings", class = "m-0")
+            ),
+            div(
+              class = "card-body",
+              # Population type selector with improved styling
+              radioButtons("population_type", "Population Type", 
                            choices = c("Predefined Population" = "predefined", 
                                        "Import Population" = "import"),
-                           inline = TRUE), 
-              class = "mb-4"),
-          hr(),
-          
-          # Settings for predefined population
-          conditionalPanel(
-            condition = "input.population_type == 'predefined'",
-            selectInput("population", "Select Population",
-                        choices = c("Pediatric Eastern African Virtual VL Population", "WHO Virtual Population"), 
-                        width = "100%"),
-            hr(),
-            radioGroupButtons(
-              inputId = "age_unit",
-              label = "Age Unit",
-              choices = c("years", "months"),
-              justified = TRUE,
-              checkIcon = list(yes = icon("check-circle"))),
-            numericInput("subj_num", "Individuals per Age Unit", 
-                         value = 10, min = 1, step = 1, width = "100%"),
-            hr(),
-            div(materialSwitch("use_seed", "Reproduce Population", value = FALSE), class = "mt-3"),
-            conditionalPanel(
-              condition = "input.use_seed == true",
-              numericInput("seed_value", "Seed Value", value = NA, min = 1, step = 1, width = "100%")
-            ),
-            actionButton("show_inputs", "Customize Covariates", 
-                         class = "btn btn-outline-primary btn-block mt-3"),
-            div(
-              id = "covariate_panel",
-              style = "display: none;",
-              h5("Covariate Ranges", class = "mt-3", style = "color: #0056b3;"),
-              fluidRow(
-                column(6, numericInput("min_age", "Min Age (Years)", value = 0)),
-                column(6, numericInput("max_age", "Max Age (Years)", value = 18))
+                           inline = TRUE),
+              hr(class = "my-3"),
+              
+              # Predefined population settings
+              conditionalPanel(
+                condition = "input.population_type == 'predefined'",
+                selectizeInput("population", "Select Population",
+                            choices = c("Pediatric Eastern African Virtual VL Population", 
+                                        "WHO Virtual Population"), 
+                            width = "100%"),
+                hr(class = "my-3"),
+                
+                div(class = "form-group",
+                    radioGroupButtons(
+                      inputId = "age_unit",
+                      label = "Age Unit",
+                      choices = c("years", "months"),
+                      justified = TRUE,
+                      status = "primary",
+                      checkIcon = list(yes = icon("check-circle"))
+                    )
+                ),
+                
+                numericInput("subj_num", "Individuals per Age Unit", 
+                             value = 10, min = 1, step = 1, width = "100%"),
+                hr(class = "my-3"),
+                
+                div(class = "d-flex align-items-center",
+                    materialSwitch("use_seed", "Reproduce Population", 
+                                   value = FALSE, status = "primary"),
+                ),
+                
+                conditionalPanel(
+                  condition = "input.use_seed == true",
+                  div(class = "mt-3",
+                      numericInput("seed_value", "Seed Value", value = 9119, 
+                                   min = 1, step = 1, width = "100%")
+                  )
+                ),
+                
+                div(class = "mt-4",
+                    actionButton("show_inputs", "Customize Covariates", 
+                                 icon = icon("sliders"),
+                                 class = "btn btn-outline-primary btn-block")
+                ),
+                
+                div(
+                  id = "covariate_panel",
+                  style = "display: none;",
+                  div(class = "mt-3 mb-2",
+                      h5("Covariate Ranges", style = "color: #2C3E50;")
+                  ),
+                  
+                  fluidRow(
+                    column(6, numericInput("min_age", "Min Age (Years)", value = 0)),
+                    column(6, numericInput("max_age", "Max Age (Years)", value = 18))
+                  ),
+                  fluidRow(
+                    column(6, numericInput("min_WT", "Min Weight (kg)", value = 0)),
+                    column(6, numericInput("max_WT", "Max Weight (kg)", value = 150))
+                  ),
+                  fluidRow(
+                    column(6, numericInput("min_HT", "Min Height (cm)", value = 0)),
+                    column(6, numericInput("max_HT", "Max Height (cm)", value = 200))
+                  )
+                )
               ),
-              fluidRow(
-                column(6, numericInput("min_WT", "Min Weight (kg)", value = 0)),
-                column(6, numericInput("max_WT", "Max Weight (kg)", value = 150))
+              
+              # Import dataset settings
+              conditionalPanel(
+                condition = "input.population_type == 'import'",
+                div(
+                  class = "card mb-4",
+                  div(
+                    class = "card-body",
+                    h5("Virtual Population Template", class = "mb-3"),
+                    downloadButton("download_template", "Download Template", 
+                                   class = "btn-primary w-100",
+                                   icon = icon("file-download"))
+                  )
+                ),
+                
+                div(
+                  class = "card mb-4",
+                  div(
+                    class = "card-body",
+                    h5("Upload Dataset (CSV)", class = "mb-3"),
+                    fileInput("upload_csv", label = NULL, 
+                              placeholder = "No file selected", 
+                              buttonLabel = div(icon("upload"), "Browse"), 
+                              accept = c(".csv"),
+                              width = "100%")
+                  )
+                ),
+                
+                div(
+                  class = "card",
+                  div(
+                    class = "card-body bg-light",
+                    h5("Instructions", class = "mb-3"),
+                    tags$ol(
+                      class = "ps-4",
+                      tags$li("Download the template CSV file"),
+                      tags$li("Fill in your population data"),
+                      tags$li("Upload your completed CSV file"),
+                      tags$li("Ensure all required columns are present")
+                    )
+                  )
+                )
               ),
-              fluidRow(
-                column(6, numericInput("min_HT", "Min Height (cm)", value = 0)),
-                column(6, numericInput("max_HT", "Max Height (cm)", value = 200))
+              
+              # Action buttons
+              div(class = "mt-4",
+                  actionButton("go_button", "Load Population", 
+                               icon = icon("database"),
+                               class = "btn btn-primary btn-lg btn-block mb-3"),
+                  actionButton("explore", "Explore Demographics", 
+                               icon = icon("chart-bar"),
+                               class = "btn btn-secondary btn-lg btn-block")
               )
             )
-          ),
-          
-          # Settings for importing a dataset
-          conditionalPanel(
-            condition = "input.population_type == 'import'",
-            div(
-              class = "card shadow-sm",
-              style = "padding: 15px; margin-bottom: 20px; border-radius: 8px;",
-              
-              div(
-                h4("Virtual Population Template", style = "font-weight: 600; color: #2C3E50;"),
-                downloadButton("download_template", "Download .csv Template", 
-                               class = "btn-primary w-100 mt-2")
-              )
-            ),
-            
-            div(
-              class = "card shadow-sm",
-              style = "padding: 15px; margin-bottom: 20px; border-radius: 8px;",
-              
-              div(
-                h4("Upload Dataset (CSV format)", style = "font-weight: 600; color: #2C3E50;"),
-                fileInput("upload_csv", label = NULL, 
-                          placeholder = "No file selected", 
-                          buttonLabel = "Browse", 
-                          accept = c(".csv"),
-                          width = "100%")
-              )
-            ),
-            
-            div(
-              class = "card shadow-sm",
-              style = "padding: 15px; border-radius: 8px; background-color: #F7F9F9;",
-              
-              h4("Instructions", style = "font-weight: 600; color: #2C3E50;"),
-              tags$ol(
-                tags$li("Download the template CSV file."),
-                tags$li("Fill in your population data following the template format."),
-                tags$li("Upload your completed CSV file."),
-                tags$li("Ensure all required columns are present, and data types match the template.")
-              )
-            )
-          ),
-          
-          # Action buttons
-          div(class = "mt-4",
-              actionButton("go_button", "Load Population", 
-                           class = "btn btn-primary btn-lg btn-block"),
-              actionButton("explore", "Explore Demographics", 
-                           class = "btn btn-secondary btn-lg btn-block mt-3")
           )
         ),
         
@@ -145,11 +260,7 @@ fluidPage(
               fluidRow(
                 column(4, valueBoxOutput("id_count", width = NULL)),
                 column(8, valueBoxOutput("gender_distribution", width = NULL))
-              ),
-              hr(),
-              fluidRow(
-                withSpinner(plotOutput("age_metric_plot", height = "600px"), type = 7),
-                )
+              )
             ),
             tabPanel(
               "Demographics Map",
@@ -166,69 +277,129 @@ fluidPage(
       )
     ),
     
-    tabPanel("Dose Building",
-             sidebarLayout(
-               sidebarPanel(
-                 div(class = "card shadow-sm p-3 mb-3",
-                     selectInput("model", "Select Model",
-                                 choices = c("L. Verrest (2023)", "Upload Own Model"),
-                                 selected = "L. Verrest (2023)", width = "100%"),
-                     conditionalPanel(
-                       condition = "input.model == 'Upload Own Model'",
-                       fileInput("pk_model_file", "Upload OWN Model", accept = c(".cpp"),
-                                 placeholder = "Please upload a .cpp file")
-                     )
-                 ),
-                 
-                 div(class = "card shadow-sm p-3 mb-3",
-                     h4("Build Dosing Regimen", class = "text-primary"),
-                     tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css")),
-                     regimen_modal_ui("regimen"),
-                     hr(),
-                     numericInput(
-                       inputId = "weight",
-                       label = "Maximum included weight (kg) in the analysis",
-                       value = 30
-                     ),
-                     hr(),
-                     materialSwitch("custom_limit", "Use Custom limits", value = FALSE),
-                     conditionalPanel(
-                       condition = "input.custom_limit == true",
-                       div(
-                         numericInput(
-                           inputId = "upp_limit",
-                           label = "Upper limit of AUC (ug*day/mL)",
-                           value = NA
-                         ),
-                         numericInput(
-                           inputId = "lower_limit",
-                           label = "Lower limit of T>EC90 (days)",
-                           value = NA
-                         )
-                       )
-                     )
-                 ),
-                 
-                 actionButton("run_model", "Load Dosing Strategy", 
-                              class = "btn btn-primary btn-lg w-100 mt-3"),
-                 
-                 # Conditional panels for different tabs
-                 conditionalPanel(
-                   condition = "input.tab_selected == 'Pharmacokinetics'",
-                   div(class = "card shadow-sm p-3 mt-3",
-                       h4("Choose regimen:", class = "text-primary mb-3"),
-                       selectInput("select_sum_plot", "Select regimen:", choices = NULL, selected = NULL),
-                   )
-                 ),
-                 conditionalPanel(
-                   condition = "input.tab_selected == 'pd'",
-                   div(class = "card shadow-sm p-3 mt-3",
-                       selectInput("select_hazard_sumplot", "Select regimen:", choices = NULL, selected = NULL),
-                   )
-                 )
-               ),
-               
-               mainPanel(
+    tabPanel(
+      div(icon("pills"), "Dose Building"),
+      sidebarLayout(
+        sidebarPanel(
+          width = 3,
+          div(
+            class = "card mb-4",
+            div(
+              class = "card-header bg-primary text-white",
+              h4("Model Selection", class = "m-0")
+            ),
+            div(
+              class = "card-body",
+              selectizeInput(
+                "model", 
+                "Select Model",
+                choices = c("L. Verrest (2023)", "Upload Own Model"),
+                selected = "L. Verrest (2023)", 
+                width = "100%",
+                options = list(
+                  dropdownParent = "body",
+                  openOnFocus = TRUE,
+                  maxOptions = 10
+                )
+              ),
+              conditionalPanel(
+                condition = "input.model == 'Upload Own Model'",
+                fileInput(
+                  "pk_model_file", 
+                  "Upload Model", 
+                  accept = c(".cpp"),
+                  buttonLabel = div(icon("upload"), "Browse"),
+                  placeholder = "Select .cpp file"
+                )
+              )
+            )
+          ),
+          
+          div(
+            class = "card mb-4",
+            div(
+              class = "card-header bg-primary text-white",
+              h4("Dosing Regimen", class = "m-0")
+            ),
+            div(
+              class = "card-body",
+              regimen_modal_ui("regimen"),
+              hr(class = "my-3"),
+              
+              numericInput(
+                inputId = "weight",
+                label = "Maximum weight (kg) for analysis",
+                value = 30
+              ),
+              
+              hr(class = "my-3"),
+              
+              materialSwitch("custom_limit", "Use Custom limits", 
+                             value = FALSE, status = "primary"),
+              
+              conditionalPanel(
+                condition = "input.custom_limit == true",
+                div(class = "mt-3",
+                    numericInput(
+                      inputId = "upp_limit",
+                      label = "Upper limit of AUC (μg·day/mL)",
+                      value = NA
+                    ),
+                    numericInput(
+                      inputId = "lower_limit",
+                      label = "Lower limit of T>EC90 (days)",
+                      value = NA
+                    )
+                )
+              )
+            )
+          ),
+          
+          actionButton("run_model", "Load Dosing Strategy", 
+                       icon = icon("play"),
+                       class = "btn btn-primary btn-lg w-100 mb-4"),
+          
+          # Conditional panels for different tabs
+          conditionalPanel(
+            condition = "input.tab_selected == 'Pharmacokinetics'",
+            div(
+              class = "card",
+              div(
+                class = "card-header bg-info text-white",
+                h4("Regimen Selection", class = "m-0")
+              ),
+              div(
+                class = "card-body",
+                selectizeInput("select_sum_plot", "Select regimen:", 
+                            choices = NULL, selected = NULL, width = "100%",
+                            options = list(
+                              dropdownParent = "body",
+                              openOnFocus = TRUE
+                            ))
+              )
+            )
+          ),
+          
+          conditionalPanel(
+            condition = "input.tab_selected == 'pd'",
+            div(
+              class = "card",
+              div(
+                class = "card-header bg-info text-white",
+                h4("Regimen Selection", class = "m-0")
+              ),
+              div(
+                class = "card-body",
+                selectizeInput("select_hazard_sumplot", "Select regimen:", 
+                            choices = NULL, selected = NULL, width = "100%",
+                            options = list(
+                              dropdownParent = "body",
+                              openOnFocus = TRUE))
+              )
+            )
+          )
+        ),
+        mainPanel(
                  tabsetPanel(
                    id = "tab_selected",
                    
@@ -302,7 +473,7 @@ fluidPage(
                                   ),
                                   div(class = "card-body p-4",
                                       div(class = "mb-3",
-                                          selectInput("select_sum_plot_ref", 
+                                          selectizeInput("select_sum_plot_ref", 
                                                       label = NULL, 
                                                       choices = NULL, 
                                                       selected = NULL,
@@ -362,11 +533,15 @@ fluidPage(
                                 ),
                                 div(class = "card-body p-4",
                                     div(class = "mb-3",
-                                        selectInput("select_hazard_sumplot_ref", 
+                                        selectizeInput("select_hazard_sumplot_ref", 
                                                     label = "Select reference regimen:", 
                                                     choices = NULL, 
                                                     selected = NULL,
-                                                    width = "100%")
+                                                    width = "100%",
+                                                    options = list(
+                                                      dropdownParent = "body",
+                                                      openOnFocus = TRUE
+                                                    ))
                                     ),
                                     tags$style(HTML("
                    #select_hazard_sumplot_ref {
@@ -405,7 +580,7 @@ fluidPage(
       sidebarLayout(
         sidebarPanel(
           div(class = "card shadow-sm p-3 mb-3",
-              selectInput("model_sens", "Select Model",
+              selectizeInput("model_sens", "Select Model",
                           choices = c("L. Verrest (2023)", "Upload Own Model"),
                           selected = "L. Verrest (2023)", width = "100%"),
               conditionalPanel(
@@ -444,9 +619,13 @@ fluidPage(
           ),
           div(class = "card shadow-sm p-3 mb-3",
               h4("Sensitivity Analysis Settings", class = "text-primary mb-3"),
-              selectInput("param_to_analyze", "Parameter to Analyze",
+              selectizeInput("param_to_analyze", "Parameter to Analyze",
                           choices = c("CL" = "THETA1", "V" = "THETA2", "KA" = "THETA3", 
-                                      "COV F (WEEK)" = "THETA7", "COV F (DDOS)" = "THETA8")),
+                                      "COV F (WEEK)" = "THETA7", "COV F (DDOS)" = "THETA8"),
+                          options = list(
+                            dropdownParent = "body",
+                            openOnFocus = TRUE
+                          )),
               numericInput("sensitivity_step", "Step Size (%)", value = 25, min = 1, max = 100, step = 1),
           ),
           actionButton("run_sens", "Run Sensitivity Analysis", 

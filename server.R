@@ -218,7 +218,7 @@ server <- function(input, output, session) {
   output$demographics_map <- renderLeaflet({
     shiny::req(
       input$go_button,
-      input$population == "Pediatric Eastern African Virtual Population",
+      input$population == "Pediatric Eastern African Virtual VL Population",
       input$pop_sim_res == "Demographics"
     )
     
