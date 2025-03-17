@@ -473,16 +473,16 @@ server <- function(input, output, session) {
       mutate(
         DOSE = case_when(
           TYPE == paste(REGIMEN, "Allometric FFM-based") & paste0(REGIMEN, "_DOSE_Allometric_FFM") %in% names(pick(everything())) ~ 
-            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_Allometric_FFM"))),
+            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_Allometric_FFM")), " mg"),
           
           TYPE == paste(REGIMEN, "Conventional (mg/kg)") & paste0(REGIMEN, "_DOSE_conventional") %in% names(pick(everything())) ~ 
-            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_conventional"))),
+            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_conventional")), " mg"),
           
           TYPE == paste(REGIMEN, "Allometric WB-based") & paste0(REGIMEN, "_DOSE_Allometric_WB") %in% names(pick(everything())) ~ 
-            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_Allometric_WB"))),
+            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_Allometric_WB")), " mg"),
           
           TYPE == paste(REGIMEN, "Custom Allometric WB-based") & paste0(REGIMEN, "_DOSE_Allometric_WB_custom") %in% names(pick(everything())) ~ 
-            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_Allometric_WB_custom"))),
+            paste0("Dose: ", getElement(pick(everything()), paste0(REGIMEN, "_DOSE_Allometric_WB_custom")), " mg"),
           
           TRUE ~ "Other"
         )
