@@ -27,7 +27,8 @@ check_and_install_packages <- function(required_packages) {
 
 # Define required packages
 required_packages <- c(
-  "shiny", "shinyjs", "shinyWidgets", "shinycssloaders","ggplot2", "dplyr", 
+  "shiny", "shinyjs", "shinyWidgets", "shinycssloaders", "shinydashboard",
+  "ggplot2", "dplyr", 
   "tidyr", "data.table", "mrgsolve", "shinythemes", "plotly", "DT", "gt", 
   "kableExtra", "leaflet", "htmltools", "conflicted"
 )
