@@ -98,66 +98,27 @@ server <- function(input, output, session) {
     shiny::req(input$explore)
     data_list <- data()
     
-    mean_se <- function(x) {
-      m <- mean(x, na.rm = TRUE)
-      se <- sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))
-      data.frame(y = m, ymin = m - se, ymax = m + se)
-    }
-    
-    rain_height <- 0.1
-    
-    
-    ggplot(data_list$WHO_data_HT_WT_FFM_long, aes(x = "", y = VAL, fill = GENDER)) +
-      # Cloud: flat violins (with slight nudge to the right)
-      introdataviz::geom_flat_violin(trim = FALSE, alpha = 0.2,
-                                     position = position_nudge(x = rain_height + 0.05)) +
-      # Rain: jittered points representing individual observations
-      geom_point(aes(colour = GENDER), size = 2, alpha = 0.09, show.legend = FALSE,
-                 position = position_jitter(width = rain_height, height = 0)) +
-      # Boxplots: nudged to the left to separate from the violins and points
-      geom_boxplot(width = rain_height, 
-                   alpha = 0.9, 
-                   show.legend = FALSE,
-                   outlier.shape = NA,
-                   position = position_dodge(width = 0.1)) +
-      # Mean and SE: summarized as a point-range and nudged to further separate layers
-      stat_summary(fun.data = mean_se, geom = "pointrange",
-                   aes(color = GENDER), show.legend = FALSE,
-                   position = position_nudge(x = rain_height * 3)) +
-      # Faceting by metric; adjust the facet variable if needed
-      facet_wrap(~ METRIC, nrow = 3,scales = "free_y") +
-      # X-axis: minimal since we are using coord_flip()
-      scale_x_discrete(name = "", expand = c(rain_height * 3, 0, 0, 0.7)) +
-      # Y-axis: using pretty breaks based on data
-      scale_y_continuous(name = "", breaks = scales::pretty_breaks(n = 20),limits = c(0, NA),
-                         expand = expansion(mult = c(0, 0.1))) +
-      # Flip coordinates for a horizontal layout
-      coord_flip() +
-      # Color scales for fill and colour
-      scale_fill_brewer(palette = "Dark2", name = "Gender") +
-      scale_colour_brewer(palette = "Dark2") +
-      # Add a caption with a description of the plot
+    ggplot(data_list$WHO_data_HT_WT_FFM_long, 
+           aes(x = VAL, fill = GENDER, color = GENDER)) +
+      geom_density(alpha = 0.4, linewidth = 0.7) +
+      facet_wrap(~METRIC, scales = "free_x", nrow = 1) +
+      theme_bw() +
+      scale_fill_brewer(palette = "Set1") +
+      scale_color_brewer(palette = "Set1") +
       labs(
-        caption = "The flat violins (clouds) represent the full distribution of each covariate, 
-    the individual dots indicate the raw data points, the boxplots summarize the distribution 
-    (median and interquartile range), and the point-range markers within the clouds display the 
-    mean and its standard error.") +
-      # Use a minimal theme with professional touches
-      theme_minimal(base_size = 12) +
-      theme(
-        panel.grid.major.y = element_blank(),            # Remove horizontal grid lines
-        strip.text = element_text(face = "bold", size = 12), # Bold facet labels
-        strip.background = element_rect(fill = "gray90", color = NA),
-        legend.position = c(0.85, 0.85),                   # Position legend inside at top-right
-        legend.position.inside = TRUE,
-        legend.background = element_rect(fill = "white", color = "white"),
-        axis.title.y = element_blank(),                    # Remove Y-axis title if desired
-        axis.text = element_text(color = "gray20"),
-        # Adjust the caption appearance
-        plot.caption = element_text(size = 12, face = "italic", hjust = 0),
-        plot.caption.position = "panel",                     # Position caption below the panel
-        
-      )
+        title = "Distribution of covariates by Gender",
+        subtitle = "Comparison of density distributions across measurement categories",
+        x = "Value", 
+        y = "Density") +
+          theme(
+            legend.position = "bottom",
+            legend.title = element_text(face = "bold"),
+            strip.text = element_text(face = "bold", size = 11),
+            plot.title = element_text(face = "bold", size = 14),
+            plot.subtitle = element_text(size = 11, color = "gray30"),
+            axis.title = element_text(face = "bold"),
+            panel.grid.minor = element_blank(),
+            panel.spacing = unit(1.5, "lines"))
     
   }) 
   
@@ -169,8 +130,8 @@ server <- function(input, output, session) {
       geom_point(alpha = 0.1, size = 1.5) +
       geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), 
                   se = TRUE, level = 0.95) +
-      facet_wrap(~METRIC, scales = "free_y") +
-      theme_minimal() +
+      facet_wrap(~METRIC, scales = "free") +
+      theme_bw() +
       labs(
         x = "Age (years)",
         y = "Value",
@@ -178,11 +139,8 @@ server <- function(input, output, session) {
       ) +
       theme(
         panel.grid.minor = element_blank(),
-        panel.grid.major.x = element_line(color = "gray90"),  # Lighten major grid lines
-        panel.grid.major.y = element_line(color = "gray90"),
         legend.position = "bottom",
         strip.text = element_text(face = "bold", size = 14),  # Larger facet labels
-        strip.background = element_rect(fill = "gray95", color = NA),  # Light background for facet labels
         plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
         plot.margin = margin(t = 10, r = 15, b = 10, l = 10),  # Add some breathing room
         axis.title = element_text(face = "bold"),  # Bold axis titles
