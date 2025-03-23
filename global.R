@@ -1,13 +1,7 @@
-# Function to check and install missing packages
 check_and_install_packages <- function(required_packages) {
-  # Convert to data.table for efficiency with large package lists
-  pkg_status <- data.table(
-    package = required_packages,
-    installed = sapply(required_packages, requireNamespace, quietly = TRUE)
-  )
-  
-  # Filter missing packages
-  missing_pkgs <- pkg_status[installed == FALSE, package]
+  # Check which packages are not installed
+  is_installed <- sapply(required_packages, requireNamespace, quietly = TRUE)
+  missing_pkgs <- required_packages[!is_installed]
   
   # Install missing packages if any
   if (length(missing_pkgs) > 0) {
@@ -21,8 +15,14 @@ check_and_install_packages <- function(required_packages) {
     }
   }
   
-  # Load all packages at once
-  invisible(sapply(required_packages, library, character.only = TRUE))
+  # Load all packages - wrap in tryCatch to continue even if some fail
+  for (pkg in required_packages) {
+    tryCatch({
+      library(pkg, character.only = TRUE)
+    }, error = function(e) {
+      warning("Could not load package: ", pkg)
+    })
+  }
 }
 
 # Define required packages
