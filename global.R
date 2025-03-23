@@ -29,7 +29,7 @@ check_and_install_packages <- function(required_packages) {
 required_packages <- c(
   "shiny", "shinyjs", "shinyWidgets", "shinycssloaders", "shinydashboard",
   "ggplot2", "dplyr", "stringr", "tidyr", "data.table", "mrgsolve", "shinythemes", 
-  "plotly", "DT", "gt", "kableExtra", "leaflet", "htmltools", "conflicted"
+  "plotly", "DT", "gt", "kableExtra", "leaflet", "htmltools", "conflicted", "cowplot"
 )
 
 # Check, install if needed, and load packages
