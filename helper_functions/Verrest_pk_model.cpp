@@ -4,29 +4,6 @@ end = 1368,
 delta = 12
 
 $PARAM @annotated
-// Semra model
-// THETA1        : 0.1008333   : CL
-// THETA2        : 22.8      : V
-// THETA3        : 0.06791667   : KA
-// THETA4        : 0.0009583333   : Q
-// THETA5        : 2.26      : V3
-// THETA6        : 1           : F1
-// THETA7        : 0.69     : COVF1_WEEK1
-// THETA8        : -1.69     : COVF2_DDOS 
-// THETA9        : 1.84        : h0
-// THETA10       : 167.28      : I50
-// Verrest model
-// THETA1        : 0.0768549   : CL
-// THETA2        : 13.5897     : V
-// THETA3        : 0.0367427   : KA
-// THETA4        : 0.0070124   : Q
-// THETA5        : 2.22262     : V3
-// THETA6        : 1           : F1
-// THETA7        : 0.648351    : COVF1_WEEK1
-// THETA8        : -2.40037    : COVF2_DDOS
-// THETA9        : 1.84        : h0
-// THETA10       : 167.28      : I50
-// final estimates (wendy)
 THETA1        : 0.0745   : CL
 THETA2        : 13.2     : V
 THETA3        : 0.0371   : KA
@@ -38,8 +15,6 @@ THETA8        : -3.14   : COVF2_DDOS
 THETA9        : 1.84        : h0
 THETA10       : 167.28      : I50
 
-
-
 $PARAM @covariates
 FFM = 40;
 AGE = 70;
@@ -50,19 +25,10 @@ FLAG = 1;
 
 
 $OMEGA @annotated
-//Semra 
-// ETA1          : 0.0316655   : CL
-// ETA2          : 0.559171    : COVF1 F1 
-// Verrest
-// ETA1          : 0.0267434   : CL
-// ETA2          : 0.559171    : COVF1 F1
-// final estimates (wendy)
 ETA1          : 0.0267  : CL
 ETA2          : 0.584   : COVF1 F1
 
 $SIGMA @annotated
-// EPS1          : 0.114853   : proportional_PK // Semra
-// EPS1          : 0.0991197   : proportional_PK // Verrest
 EPS1          : 0.0982   : proportional_PK // Wendy
 
 
@@ -114,7 +80,7 @@ if(DDOS_calc >= 70) {
 }
 
 
-double CL     = THETA1 * ALLOCL * exp(ETA(1));
+double CL     = THETA1 * ALLOCL * exp(ETA1);
 double V      = THETA2 * ALLOV;
 double KA     = THETA3;
 double Q      = THETA4;
@@ -174,4 +140,4 @@ double MIL = TEC90;
 double h = h0 * (1- (MIL/(I50+MIL)));
 
 $CAPTURE
-CONC_CENT AMT TOEC90 AUC_VAL Cmax h Tmax FFM DDOS_calc COVF1 COVF2 F_DEPOT AGE WT HT SEX FLAG CL KE V ETA1 ETA2 
+CONC_CENT AMT TOEC90 AUC_VAL Cmax h Tmax FFM DDOS_calc COVF1 COVF2 F_DEPOT AGE WT HT SEX FLAG CL KE V 

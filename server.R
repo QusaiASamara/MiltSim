@@ -9,11 +9,23 @@ server <- function(input, output, session) {
     toggle("covariate_panel")
   })
   
-  model <- eventReactive(input$model, {
-    shiny::req(input$model)
+  
+  model <- eventReactive( c(input$model, input$IIV, input$RUV, input$go_button), {
+    
     if (input$model == "L. Verrest (2023)") {
       mod_MF_pk <- mread("helper_functions/Verrest_pk_model.cpp")
-      loadso(mod_MF_pk)  
+      
+      if (!input$IIV) {
+        zero_omega <- matrix(0, nrow=2, ncol=2)
+        mod_MF_pk <- update(mod_MF_pk, omega = zero_omega)
+        }
+      
+      if (!input$RUV) {
+        zero_sigma <- matrix(0, nrow=1, ncol=1)
+        mod_MF_pk <- update(mod_MF_pk, sigma = zero_sigma)
+        }
+      loadso(mod_MF_pk)
+      
     } else if (input$model == "Upload Own Model") {
       shiny::req(input$pk_model_file)
       model_path <- input$pk_model_file$datapath

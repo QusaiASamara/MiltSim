@@ -314,6 +314,26 @@ fluidPage(
                   placeholder = "Select .cpp file"
                 )
               )
+            ),
+            conditionalPanel(
+              condition = "input.model == 'L. Verrest (2023)'",
+            div(
+                materialSwitch(
+                  inputId = "IIV",
+                  label = "Include Interindividual Variability (IIV)",
+                  value = TRUE,
+                  width = "auto"
+                )
+            ),
+            
+            div(
+                materialSwitch(
+                  inputId = "RUV",
+                  label = "Include Residual Unexplained Variability (RUV)",
+                  value = TRUE,
+                  width = "auto"
+                ),
+            )
             )
           ),
           
