@@ -36,6 +36,14 @@ required_packages <- c(
 # Check, install if needed, and load packages
 check_and_install_packages(required_packages)
 
+# Install nonmem2mrgsolve from GitHub if not already installed
+if (!requireNamespace("nonmem2mrgsolve", quietly = TRUE)) {
+  message("Installing nonmem2mrgsolve from GitHub")
+  devtools::install_github("Andy00000000000/nonmem2mrgsolve")
+}
+
+library(nonmem2mrgsolve)
+
 # Load helper functions
 folder_path <- "helper_functions/"
 if (dir.exists(folder_path)) {
