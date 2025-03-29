@@ -1,0 +1,79 @@
+# Model File Upload Guide
+
+## Uploading mrgsolve Models
+
+### Prerequisites
+- Single C++ model file with `.cpp` extension
+- Recommended file extension: `.cpp`
+
+### Upload Workflow
+1. Navigate to the "Drop or Upload Model Files" section
+2. Select your mrgsolve `.cpp` model file
+3. Select "mrgsolve (.cpp)" in the File Format dropdown
+4. Preview the model code using "View Model Code"
+5. Review the model in the Model Editor
+6. Confirm upload by clicking "Save Model"
+
+### Model File Requirements
+- Valid mrgsolve C++ model file
+- Complete model definition
+- Compliant with mrgsolve model syntax
+
+## NONMEM to mrgsolve Translation Package
+
+### Package Overview
+- **Name**: nonmem2mrgsolve
+- **Developer**: Andy00000000000
+- **Repository**: [nonmem2mrgsolve on GitHub](https://github.com/Andy00000000000/nonmem2mrgsolve)
+
+### Package Purpose
+The `nonmem2mrgsolve` package streamlines the translation of NONMEM models to mrgsolve format, addressing critical challenges in pharmacometric modeling workflows.
+
+### Translation Capabilities
+- Convert model parameters
+- Translate individual and residual variability structures
+- Preserve original model logic and compartment definitions
+- Handle diverse NONMEM model implementations
+
+## NONMEM Model Translation Process
+
+### Required Files
+- NONMEM control file (`.ctl` or `.mod`)
+- Corresponding `.ext` file
+
+### Translation Steps
+1. Select required files:
+   - NONMEM control file (`.ctl` or `.mod`)
+   - Corresponding `.ext` file
+2. Choose "NONMEM (.ctl/.lst)" in the File Format dropdown
+3. Initiate conversion with "Convert to mrgsolve"
+4. Review the translated model in the Model Editor
+
+### Translation Considerations
+- Potential limitations in perfect feature translation
+- Complex custom implementations may require manual refinement
+- Recommended: Verify translated model against original
+
+## Package Installation
+
+### R Package Installation Method
+```r
+# Install nonmem2mrgsolve from GitHub
+devtools::install_github("Andy00000000000/nonmem2mrgsolve")
+```
+
+## Troubleshooting Translation
+
+### Common Resolution Strategies
+1. Verify complete file set (control + ext files)
+2. Validate NONMEM model syntax
+3. Check file encoding (UTF-8 recommended)
+4. Thoroughly review translated model accuracy
+
+## Support and Community Resources
+- **GitHub Issues**: Report translation challenges
+- **Package Documentation**: Comprehensive usage guidelines
+- **Community Forums**: Pharmacometric modeling discussions
+
+### Important Disclaimer
+*Translation is an automated process. Manual verification is crucial, and complex models require expert review.*

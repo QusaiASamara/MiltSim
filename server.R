@@ -1,5 +1,6 @@
 server <- function(input, output, session) {
   
+
   #################################
   ####    virtual population   ####
   #################################
@@ -9,32 +10,6 @@ server <- function(input, output, session) {
     toggle("covariate_panel")
   })
   
-  
-  model <- eventReactive( c(input$model, input$IIV, input$RUV, input$go_button), {
-    
-    if (input$model == "L. Verrest (2023)") {
-      mod_MF_pk <- mread("helper_functions/Verrest_pk_model.cpp")
-      
-      if (!input$IIV) {
-        zero_omega <- matrix(0, nrow=2, ncol=2)
-        mod_MF_pk <- update(mod_MF_pk, omega = zero_omega)
-        }
-      
-      if (!input$RUV) {
-        zero_sigma <- matrix(0, nrow=1, ncol=1)
-        mod_MF_pk <- update(mod_MF_pk, sigma = zero_sigma)
-        }
-      loadso(mod_MF_pk)
-      
-    } else if (input$model == "Upload Own Model") {
-      shiny::req(input$pk_model_file)
-      model_path <- input$pk_model_file$datapath
-      own_model <- mread(model_path)
-      loadso(own_model)
-    } else {
-      NA
-    }
-  })
   
   data <- eventReactive(input$go_button, {
     if (input$population_type == "predefined") {
@@ -196,6 +171,312 @@ server <- function(input, output, session) {
     create_demographic_map()
   })
   
+  
+  #################################
+  ####    Model building       ####
+  #################################
+  
+  session$onSessionEnded(function() {
+    # Use a tryCatch and direct file system operations
+    if (!is.null(session$userData$temp_model_dir) && 
+        dir.exists(session$userData$temp_model_dir)) {
+      tryCatch({
+        unlink(session$userData$temp_model_dir, recursive = TRUE, force = TRUE)
+      }, error = function(e) {
+        # Optional: log the error if needed
+        message("Error during session cleanup: ", e$message)
+      })
+    }
+  })
+  
+  
+  observeEvent(input$show_upload_instructions, {
+    showModal(modalDialog(
+      title = "Model File Upload Instructions",
+      includeMarkdown("helper_functions/file_upload_instructions.Rmd"),  # Or you can use the text directly
+      footer = modalButton("Close"),
+      size = "l"
+    ))
+  })
+  
+  
+  rv <- reactiveValues(
+    current_model = NULL,
+    saved_model_code = NULL,
+    saved_model = NULL,
+    model_name = NULL,
+    model_compile_error = NULL,
+    temp_model_dir = NULL,
+    uploaded_files = NULL
+  )
+  
+  output$current_model_display <- renderUI({
+    if (!is.null(rv$model_name)) {
+      div(
+        class = "current-model-box",
+        style = "border: 1px solid #d3d3d3; 
+             padding: 10px; 
+             margin-bottom: 10px; 
+             display: flex; 
+             justify-content: space-between; 
+             align-items: center;",
+        div(
+          strong("Current Model: "),
+          span(ifelse(is.null(rv$model_name), "Uploaded Model", rv$model_name))
+        ),
+        actionButton("remove_current_model", 
+                     label = "Remove Model", 
+                     icon = icon("trash"),
+                     class = "btn-danger btn-sm")
+      )
+    } else {
+      NULL
+    }
+  })
+  
+  
+  
+  observeEvent(input$open_model_upload, {
+    # Validate model loading state with more informative messages
+    if (!is.null(rv$model_name)) {
+      showModal(
+        modalDialog(
+          title = "Model Already Loaded",
+          "A model is currently loaded. Please remove the existing model before uploading a new one.",
+          footer = modalButton("Close"),
+          easyClose = TRUE
+        )
+      )
+    } else {
+      showModal(model_UI())
+    }
+  })
+  
+  observeEvent(input$remove_current_model, {
+    # Comprehensive model reset with detailed logging
+    tryCatch({
+      # Reset all model-related reactive values
+      rv$saved_model <- NULL
+      rv$model_name <- NULL
+      rv$saved_model_code <- NULL
+      rv$current_model <- NULL
+      rv$model_compile_error <- NULL
+      rv$uploaded_files <- NULL
+      
+      # Clean up any lingering temporary directories
+      if (!is.null(rv$temp_model_dir) && dir.exists(rv$temp_model_dir)) {
+        unlink(rv$temp_model_dir, recursive = TRUE)
+        rv$temp_model_dir <- NULL
+      }
+      
+      # Reset UI elements
+      updateSelectInput(session, "model", selected = "L. Verrest (2023)")
+      
+      # Enhanced notification
+      showNotification(
+        "Model and associated files have been completely removed", 
+        type = "message", 
+        duration = 3
+      )
+    }, error = function(e) {
+      showNotification(
+        paste("Error removing model:", e$message), 
+        type = "error", 
+        duration = 5
+      )
+    })
+  })
+  
+  observeEvent(input$viewModel, {
+    shiny::req(input$pk_model_file)
+    shiny::req(input$file_type == "mrgsolve")
+    
+    if (input$file_type != "mrgsolve") {
+      showNotification(
+        "Error: Selected file type does not match the uploaded file. Please choose 'NONMEM' for NONMEM files.",
+        type = "error",
+        duration = 5
+      )
+      updateSelectInput(session, "file_type", selected = "nonmem")
+      return()
+    }
+    
+    tryCatch({
+      model_path <- input$pk_model_file$datapath
+      
+      file_ext <- tools::file_ext(input$pk_model_file$name)
+      allowed_extensions <- "cpp"
+      
+      if (!(tolower(file_ext) %in% allowed_extensions)) {
+        showNotification(
+          paste("Invalid file type. Please upload a .cpp file for mrgsolve models."),
+          type = "error",
+          duration = 5
+        )
+        return()
+      }
+      
+      model_code <- readLines(model_path, warn = FALSE)
+      model_code <- paste(model_code, collapse = "\n")
+      
+      updateAceEditor(session, "modelCodeEditor", value = model_code)
+      
+      showNotification(
+        "Model file successfully loaded",
+        type = "message",
+        duration = 3
+      )
+    }, error = function(e) {
+      showNotification(
+        paste("Error reading model file:", e$message),
+        type = "error",
+        duration = 5
+      )
+    })
+  })
+  
+  
+  observeEvent(input$convertModel, {
+    shiny::req(input$pk_model_file)
+    shiny::req(input$file_type == "nonmem")
+    
+    # Create a temporary directory for this model
+    temp_model_dir <- create_temp_model_dir()
+    
+    # Copy all uploaded files to the temporary directory
+    file.copy(
+      from = input$pk_model_file$datapath, 
+      to = file.path(temp_model_dir, input$pk_model_file$name)
+    )
+    
+    tryCatch({
+      # Use the robust conversion function
+      converted_file <- convert_nonmem_model(input$pk_model_file, temp_model_dir)
+      
+      # Read the generated mrgsolve code
+      mrgsolve_code <- readLines(converted_file, warn = FALSE)
+      
+      # Update the code editor with the translated mrgsolve code
+      updateAceEditor(session, "modelCodeEditor", 
+                      value = paste(mrgsolve_code, collapse = "\n"),
+                      mode = "c_cpp")
+      
+      # Store the temporary directory and files
+      rv$temp_model_dir <- temp_model_dir
+      rv$uploaded_files <- input$pk_model_file
+      
+      # Show success notification
+      showNotification(
+        "NONMEM model successfully translated to mrgsolve!", 
+        type = "message", 
+        duration = 3
+      )
+    }, error = function(e) {
+      # Enhanced error handling
+      showNotification(
+        paste("Translation failed:", conditionMessage(e)), 
+        type = "error", 
+        duration = 6
+      )
+      
+      # Clean up the temporary directory
+      unlink(temp_model_dir, recursive = TRUE)
+    })
+  })
+  
+  output$downloadModel <- downloadHandler(
+    filename = function() {
+      paste0("model_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".cpp")
+    },
+    content = function(file) {
+      writeLines(input$modelCodeEditor, file)
+    }
+  )
+  
+  observeEvent(input$saveModel, {
+    shiny::req(input$modelCodeEditor)
+    
+    tryCatch({
+      # Create a temporary file to save the model
+      temp_model_file <- tempfile(fileext = ".cpp")
+      writeLines(input$modelCodeEditor, temp_model_file)
+      
+      
+      # Save the model details
+      rv$saved_model_code <- temp_model_file
+      rv$model_name <- paste0("Translated Model (", 
+                              format(Sys.time(), "%Y-%m-%d %H:%M"), ")")
+      
+      # Update UI
+      updateSelectInput(session, "model", selected = "Upload Own Model")
+      
+      # Show success notification
+      showNotification("Model saved successfully", 
+                       type = "message", 
+                       duration = 3)
+      
+      # Remove the modal
+      removeModal()
+    }, error = function(e) {
+      showNotification(
+        paste("Saving error:", conditionMessage(e)), 
+        type = "error", 
+        duration = 6
+      )
+    })
+  })
+  
+  model <- eventReactive(
+    if (input$model == "L. Verrest (2023)") {
+      list(input$model, input$IIV, input$RUV, input$go_button)
+    } else if (input$model == "Upload Own Model") {
+      list(input$model, rv$saved_model_code, input$go_button)
+    },
+    {
+      
+      tryCatch({
+        if (input$model == "L. Verrest (2023)") {
+          
+          mod_MF_pk <- mread("helper_functions/Verrest_pk_model.cpp")
+          
+          # Dynamically update model based on IIV and RUV settings
+          if (!input$IIV) {
+            mod_MF_pk <- update(mod_MF_pk, omega = matrix(0, nrow=2, ncol=2))
+          }
+          
+          if (!input$RUV) {
+            mod_MF_pk <- update(mod_MF_pk, sigma = matrix(0, nrow=1, ncol=1))
+          }
+          
+          rv$model_name <- "L. Verrest (2023)"
+          rv$saved_model <- mod_MF_pk
+          
+          loadso(mod_MF_pk)
+          
+        } else if (input$model == "Upload Own Model") {
+          if (is.null(rv$saved_model_code)) {
+            stop("No model uploaded. Please upload a model first.")
+          }else{
+            own_model <- mread(rv$saved_model_code)
+            rv$model_name <- "Uploaded Custom Model"
+            rv$saved_model <- own_model
+            loadso(own_model)
+          }
+        }
+      }, error = function(e) {
+        # Store compilation error
+        rv$model_compile_error <- conditionMessage(e)
+        
+        # Show error notification
+        showNotification(
+          paste("Model compilation error:", rv$model_compile_error), 
+          type = "error", 
+          duration = 6
+        )
+        NULL
+      })
+    }
+  )
   
   
   ################################

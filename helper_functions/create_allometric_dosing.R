@@ -102,7 +102,7 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
     data_set(NM_Allo) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim(delta = 12, end = 1368) %>%
+    mrgsim() %>%
     as.data.frame()
   
    # allom_FFM_pk <- allometric_ffm_model %>%

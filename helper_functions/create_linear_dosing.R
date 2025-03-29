@@ -89,7 +89,7 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
     data_set(NM_lin) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim(delta = 12, end = 1368) %>%
+    mrgsim() %>%
     as.data.frame()
   
   # conventional_pk <- Conventional_model %>%

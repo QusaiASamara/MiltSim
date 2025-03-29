@@ -306,13 +306,8 @@ fluidPage(
               ),
               conditionalPanel(
                 condition = "input.model == 'Upload Own Model'",
-                fileInput(
-                  "pk_model_file", 
-                  "Upload Model", 
-                  accept = c(".cpp"),
-                  buttonLabel = div(icon("upload"), "Browse"),
-                  placeholder = "Select .cpp file"
-                )
+                actionButton("open_model_upload", "Upload & Configure Model", 
+                             class = "btn-primary btn-block mt-2")
               )
             ),
             conditionalPanel(
@@ -334,7 +329,8 @@ fluidPage(
                   width = "auto"
                 ),
             )
-            )
+            ),
+            uiOutput("current_model_display")
           ),
           
           div(

@@ -27,9 +27,10 @@ check_and_install_packages <- function(required_packages) {
 
 # Define required packages
 required_packages <- c(
-  "shiny", "shinyjs", "shinyWidgets", "shinycssloaders", "shinydashboard",
+  "shiny", "shinyjs", "shinyWidgets", "shinycssloaders", "shinydashboard", "shinyAce",
   "ggplot2", "dplyr", "stringr", "tidyr", "data.table", "mrgsolve", "shinythemes", 
-  "plotly", "DT", "gt", "kableExtra", "leaflet", "htmltools", "conflicted", "cowplot"
+  "plotly", "DT", "gt", "kableExtra", "leaflet", "htmltools", "conflicted", "cowplot",
+  "fontawesome"
 )
 
 # Check, install if needed, and load packages
@@ -47,3 +48,4 @@ if (dir.exists(folder_path)) {
 # Resolve function conflicts
 conflicted::conflicts_prefer(dplyr::select)
 conflicted::conflicts_prefer(dplyr::filter)
+conflicted::conflicts_prefer(shiny::req)
