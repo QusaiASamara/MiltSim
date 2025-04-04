@@ -22,14 +22,17 @@ create_bin <- function(data,Time, weight) {
     arrange(BIN, WT, AGE) %>%
     mutate(
       BINNED_WT = factor(case_when(
-        BIN < 6 ~ " < 06 kg",
+        BIN < 6 ~ "< 6 kg",
         BIN >= 6 & BIN < 10 ~ paste0("0", BIN, " kg"),
-        BIN >= 10 & BIN < 60 ~ paste0(BIN, " kg"),
-        BIN >= 60 ~ "60 kg +"
+        BIN >= 10 & BIN < 100 ~ paste0(BIN, " kg"),
+        BIN >= 100 ~ "100 kg +"
       ))) %>%
     group_by(BINNED_WT, FLAG) %>%
     mutate(DOSE_G = round(get_mode(AMT), 1)) %>%
     ungroup()  %>%
+    group_by(BIN) %>%
+    mutate(COUNT_BIN_bin = n()) %>%
+    ungroup() %>%
     {
       if (!startsWith(data_name, "Allometric_WB_custom")) {
         mutate(.,!!paste0("WT_BAND_", data_name) := case_when(
