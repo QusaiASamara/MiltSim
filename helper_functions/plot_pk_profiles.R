@@ -10,8 +10,8 @@ plot_pk_profiles <- function(data, log_y = FALSE, treatment_duration, use_loadin
   ec90_rect_ymax <- if (log_y) ec90_position * 1.2 else ec90_position + (y_max - y_min) * 0.05
   
   p <- ggplot(data, aes(x = TIME, color = TYPE, fill = TYPE)) +
-    geom_ribbon(aes(ymin = p5, ymax = p95), alpha = 0.3) +
-    geom_line(aes(y = median), size = 1.2) +
+    geom_ribbon(aes(ymin = p5, ymax = p95), alpha = 0.3,colour = "grey40",fill = "grey40" ) +
+    geom_line(aes(y = median), size = 1.2, colour = "black") +
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray60", size = 0.5) +
     labs(
       title = "Population PK Profile",

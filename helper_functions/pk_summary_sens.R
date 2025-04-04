@@ -50,13 +50,13 @@ pk_summary_sens <- function(data_stat,treatment_duration) {
       mutate(Metric = "AUC0_EOT (mg*day/L)")
     
     TOEC_90_Dlast <- data %>%
-      summarise(
-        TEC90 = round(median(TEC90, na.rm = TRUE),2)) %>% # mg*day/L
+      group_by(TIME) %>%
+      filter(TIME == treatment_duration) %>%
       summarise(
         Median = round(median(TEC90, na.rm = TRUE),2),  # mg*day/L
         IQR_low = round(quantile(TEC90, 0.25, na.rm = TRUE),2),
         IQR_upp = round(quantile(TEC90, 0.75, na.rm = TRUE),2)) %>%
-      mutate(Metric = "T>EC90 (days)")
+      mutate(Metric = "T>EC90_EOT (days)")
     
     
     TEC90 <- data %>%

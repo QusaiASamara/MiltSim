@@ -36,8 +36,6 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
                                                                  CMT=cmt, AMT = amt)
   
   Sim_data <- data %>% 
-    dplyr::select(ID, AGE, SEX, HTc, WTc, FFMc) %>%
-    rename(HT = HTc, WT = WTc, FFM = FFMc) %>% 
     merge(multiple_dose_data, by = "ID", all.x = TRUE)
   
   # Create weight band ranges if weight bands are provided
@@ -102,7 +100,7 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
     data_set(NM_Allo) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim() %>%
+    mrgsim(end= 1344, delta= 12) %>%
     as.data.frame()
   
    # allom_FFM_pk <- allometric_ffm_model %>%

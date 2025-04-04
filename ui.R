@@ -373,7 +373,7 @@ fluidPage(
             )
           ),
           
-          actionButton("run_model", "Load Dosing Strategy", 
+          actionButton("run_model", "Simulate Dosing Strategy", 
                        icon = icon("play"),
                        class = "btn btn-primary btn-lg w-100 mb-4"),
           

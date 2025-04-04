@@ -60,8 +60,6 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
                                                                  CMT=cmt, AMT = amt)
   
   Sim_data <- data %>% 
-    dplyr::select(ID, AGE, SEX, HTc, WTc, FFMc) %>%
-    rename(HT = HTc, WT = WTc, FFM = FFMc) %>% 
     merge(multiple_dose_data, by = "ID", all.x = TRUE)
   
   weight_band_expression <- NULL

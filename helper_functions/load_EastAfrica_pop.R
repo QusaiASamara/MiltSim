@@ -107,11 +107,12 @@ load_East_Africa_pop <- function(subj_num, seed, minage, maxage, minWT, maxWT, m
     filter(AGE >= minage & AGE <= maxage) %>%
     filter(WTc > minWT & WTc < maxWT) %>%
     filter(HTc > minHT & HTc < maxHT) %>%
-    dplyr::select(ID, AGE, SEX, HT, HTc, WT,WTc, FFM,FFMc) 
-
+    dplyr::select(ID, AGE, SEX, HTc, WTc, FFMc) %>%
+    rename(HT = HTc, WT = WTc, FFM = FFMc) 
+  
   WHO_data_HT_WT_FFM_long <- WHO_data_HT_WT_FFM %>%
-    dplyr::select(ID, AGE, SEX, HTc, WTc, FFMc)  %>%
-    pivot_longer(cols = c("HTc","WTc","FFMc"), names_to = "METRIC", values_to = "VAL") %>%
+    dplyr::select(ID, AGE, SEX, HT, WT, FFM)  %>%
+    pivot_longer(cols = c("HT","WT","FFM"), names_to = "METRIC", values_to = "VAL") %>%
     mutate(
       GENDER = factor(if_else(SEX == 0, "Boys", "Girls")),
       METRIC = case_when(

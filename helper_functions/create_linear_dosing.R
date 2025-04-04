@@ -36,8 +36,6 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
                                                                  CMT=cmt, AMT = amt)
   
   Sim_data <- data %>% 
-    dplyr::select(ID, AGE, SEX, HTc, WTc, FFMc) %>%
-    rename(HT = HTc, WT = WTc, FFM = FFMc) %>% 
     merge(multiple_dose_data, by = "ID", all.x = TRUE)
   
   

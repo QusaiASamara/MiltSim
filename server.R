@@ -933,8 +933,8 @@ server <- function(input, output, session) {
           "Data are presented as median (IQR). Abbreviations: **AUC0_D14**, ",
           "area under the concentration-time curve from day 0 to day 14; ",
           "**AUC0_EOT**, area under the concentration-time curve until the end of treatment; ",
-          "**Cmax**, maximum observed concentration; **T>EC90**, ",
-          "time above the EC90 value (10.6 mg/L); ",
+          "**Cmax**, maximum observed concentration; **T>EC90_EOT**, ",
+          "time above the EC90 value (10.6 mg/L) until the end of treatment; ",
           "**TEC90**, time point at which the concentration first reaches the EC90 value; ",
           "**Tmax**, time to reach maximum concentration."
         )),
@@ -1090,7 +1090,8 @@ server <- function(input, output, session) {
       "</b>.<br>",
       "Box plots represent the distribution of AUC and TEC90 values across weights for <b>",  
       names(data_frames)[names(data_frames) == input$select_sum_plot], 
-      "</b> (excluding outliers)."
+      "</b> (excluding outliers).<br>",
+      "Numbers above each weight bin represent the number of individuals in that bin."
     ))
     
     return(caption_text)
@@ -1523,8 +1524,8 @@ server <- function(input, output, session) {
           "Data are presented as median (IQR). Abbreviations: **AUC0_D14**, ",
           "area under the concentration-time curve from day 0 to day 14; ",
           "**AUC0_EOT**, area under the concentration-time curve until the end of treatment; ",
-          "**Cmax**, maximum observed concentration; **T>EC9**, ",
-          "time above the EC90 value (10.6 mg/L); ",
+          "**Cmax**, maximum observed concentration; **T>EC9_EOT**, ",
+          "time above the EC90 value (10.6 mg/L)until the end of treatment; ",
           "**TEC90**, time point at which the concentration first reaches the EC90 value; ",
           "**Tmax**, time to reach maximum concentration. +/- ", input$sensitivity_step,
           " denotes sensitivity analysis adjustments")),
