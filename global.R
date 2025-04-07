@@ -30,7 +30,7 @@ required_packages <- c(
   "shiny", "shinyjs", "shinyWidgets", "shinycssloaders", "shinydashboard", "shinyAce",
   "ggplot2", "dplyr", "stringr", "tidyr", "data.table", "mrgsolve", "shinythemes", 
   "plotly", "DT", "gt", "kableExtra", "leaflet", "htmltools", "conflicted", "cowplot",
-  "fontawesome"
+  "fontawesome", "devtools"
 )
 
 # Check, install if needed, and load packages
