@@ -522,7 +522,9 @@ server <- function(input, output, session) {
       weight_bands = NULL, 
       type = "ref", 
       upper = NULL,
-      lower = NULL)
+      lower = NULL,
+      end = input$End_sim,
+      delta = input$delta_sim)
     
     
     
@@ -583,7 +585,9 @@ server <- function(input, output, session) {
                                     weight_bands = weight_bands,
                                     type = "calc",
                                     upper = upper_ci_obs_AUC,
-                                    lower = lower_ci_obs_TOEC90),
+                                    lower = lower_ci_obs_TOEC90,
+                                    end = input$End_sim,
+                                    delta = input$delta_sim),
                                   "Conventional" = create_lin_dataset(
                                     data = data()$WHO_data_HT_WT_FFM,
                                     model = model(),
@@ -595,7 +599,9 @@ server <- function(input, output, session) {
                                     load_interval = loading_interval,
                                     main_freq = maint_freq,
                                     main_interval = maint_interval,
-                                    weight_bands = weight_bands),
+                                    weight_bands = weight_bands,
+                                    end = input$End_sim,
+                                    delta = input$delta_sim),
                                   "Allometric_WB" = create_allometric_WB_dosing(
                                     data = data()$WHO_data_HT_WT_FFM,
                                     model = model(),
@@ -607,7 +613,9 @@ server <- function(input, output, session) {
                                     load_interval = loading_interval,
                                     main_freq = maint_freq,
                                     main_interval = maint_interval,
-                                    weight_bands = weight_bands),
+                                    weight_bands = weight_bands,
+                                    end = input$End_sim,
+                                    delta = input$delta_sim),
                                   "costum_allometric_WB" = create_costum_allometric_WB_dosing(
                                     data = data()$WHO_data_HT_WT_FFM,
                                     model = model(),
@@ -622,7 +630,9 @@ server <- function(input, output, session) {
                                     main_interval = maint_interval,
                                     weight_bands_load = weight_bands,
                                     upper_limit = upper_ci_obs_AUC,
-                                    lower_limit = lower_ci_obs_TOEC90
+                                    lower_limit = lower_ci_obs_TOEC90,
+                                    end = input$End_sim,
+                                    delta = input$delta_sim
                                   ))
       
       # Add the generated regimen to the list with its name

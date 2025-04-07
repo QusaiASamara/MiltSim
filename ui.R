@@ -312,23 +312,42 @@ fluidPage(
             ),
             conditionalPanel(
               condition = "input.model == 'L. Verrest (2023)'",
-            div(
+              actionButton("sim_toggle", "Simulation Settings")
+            ),
+            
+            conditionalPanel(
+              condition = "input.sim_toggle % 2 == 1",  # Toggle open on odd clicks
+              div(
+                class = "mt-3",
+                
                 materialSwitch(
                   inputId = "IIV",
                   label = "Include Interindividual Variability (IIV)",
                   value = TRUE,
                   width = "auto"
-                )
-            ),
-            
-            div(
+                ),
+                
                 materialSwitch(
                   inputId = "RUV",
                   label = "Include Residual Unexplained Variability (RUV)",
                   value = TRUE,
                   width = "auto"
                 ),
-            )
+                
+                numericInput(
+                  inputId = "End_sim",
+                  label = "End of Simulation (days)",
+                  value = 56,
+                  min = 1
+                ),
+                
+                numericInput(
+                  inputId = "delta_sim",
+                  label = "Simulation Step Size (hr)",
+                  value = 12,
+                  min = 0.001
+                )
+              )
             ),
             uiOutput("current_model_display")
           ),

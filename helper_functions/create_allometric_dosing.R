@@ -4,7 +4,7 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
                                  load_interval = NULL,
                                  main_freq,
                                  main_interval,
-                                 weight_bands = NULL, type= c("ref", "cacl"), upper,lower) {  # Add weight_bands parameter
+                                 weight_bands = NULL, type= c("ref", "cacl"), upper,lower, end,delta) {  # Add weight_bands parameter
   
   id_count <- data$ID
   
@@ -100,7 +100,7 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
     data_set(NM_Allo) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim(end= 1344, delta= 12) %>%
+    mrgsim(delta = delta, end = end * 24)%>%
     as.data.frame()
   
    # allom_FFM_pk <- allometric_ffm_model %>%

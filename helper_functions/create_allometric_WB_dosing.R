@@ -5,7 +5,8 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
                                         load_interval = NULL,
                                         main_freq,
                                         main_interval,
-                                        weight_bands = NULL) {
+                                        weight_bands = NULL,
+                                        end,delta) {
   
   
   id_count <- data$ID
@@ -114,7 +115,7 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
     data_set(All_WB_data) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim() %>%
+    mrgsim(delta = delta, end = end * 24) %>%
     as.data.frame()
   
 # allom_WB_pk <- Allometric_WB_model %>%

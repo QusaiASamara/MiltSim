@@ -5,7 +5,8 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
                                load_interval = NULL,
                                main_freq,
                                main_interval,
-                               weight_bands = NULL) {
+                               weight_bands = NULL,
+                               end, delta) {
   
   id_count <- data$ID
   
@@ -87,7 +88,7 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
     data_set(NM_lin) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim() %>%
+    mrgsim(delta = delta, end = end * 24) %>%
     as.data.frame()
   
   # conventional_pk <- Conventional_model %>%

@@ -6,7 +6,8 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
                                                load_interval = NULL,
                                                main_freq,
                                                main_interval,
-                                               weight_bands_load = NULL, upper_limit,lower_limit) {
+                                               weight_bands_load = NULL, upper_limit,lower_limit,
+                                               end, delta) {
   
   # Get the number of flags from custom_doses
   num_flags <- custom_doses$num_flags
@@ -161,7 +162,7 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
     data_set(All_WB_data) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
-    mrgsim() %>%
+    mrgsim(delta = delta, end = end * 24) %>%
     as.data.frame()
   
   #allom_WB_pk <- Allometric_WB_custom_model %>%
