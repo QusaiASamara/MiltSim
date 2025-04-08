@@ -60,6 +60,12 @@ target_attainment_sumplots <- function(ref_data, binned_df, dosing_strategy, ref
                    "T>EC90 at EOT (days)"),
         fill = "WT_BAND"
       ) +
+      geom_hline(
+        yintercept = ifelse(metric == "AUC", upper_ci_obs_AUC, lower_ci_obs_TOEC90), 
+        linetype = "dashed", 
+        color = "yellowgreen", 
+        size = 0.8
+      ) +
       geom_text(
         data = data,
         aes(x = as.factor(BIN), y = y_label_pos, label = COUNT_BIN_bin),

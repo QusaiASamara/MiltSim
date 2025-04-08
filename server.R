@@ -1095,13 +1095,13 @@ server <- function(input, output, session) {
     data_frames <- combined_regimens()
     
     caption_text <- HTML(paste0(
-      "The yellow shaded area represents the Tukey's hinges range for <b>",  
+      "The yellow shaded area indicates the Tukey's hinges range for <b>",  
       names(data_frames)[names(data_frames) == input$select_sum_plot_ref], 
-      "</b>.<br>",
-      "Box plots represent the distribution of AUC and TEC90 values across weights for <b>",  
+      "</b>, while the dashed green line represents the target attainment limit.<br>",
+      "Box plots show the distribution of AUC and TEC90 values across weight bins for <b>",  
       names(data_frames)[names(data_frames) == input$select_sum_plot], 
-      "</b> (excluding outliers).<br>",
-      "Numbers above each weight bin represent the number of individuals in that bin."
+      "</b>, excluding outliers.<br>",
+      "Numbers above each weight bin indicate the number of individuals in that bin."
     ))
     
     return(caption_text)
