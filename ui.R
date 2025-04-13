@@ -502,37 +502,26 @@ fluidPage(
                      
                      # Summary plot in third row
                      fluidRow(
-                       column(12,
-                              div(class = "card border-0 shadow-lg mb-4",
-                                  div(class = "card-header bg-primary text-white d-flex justify-content-between align-items-center py-3",
+                       column(12, 
+                              div(class = "card border-0 shadow-lg mb-4", 
+                                  div(class = "card-header bg-primary text-white d-flex justify-content-between align-items-center py-3", 
                                       h4("Target Attainment by Weight", class = "m-0 fw-bold"),
-                                      helpText(class = "text-white-50 m-0", "Select reference regimen below")
+                                      div(class = "d-flex align-items-center", 
+                                          helpText(class = "text-white-50 me-2 mb-0", "Select reference regimen:"),
+                                          div(style = "width: 250px;", 
+                                              selectizeInput("select_sum_plot_ref", label = NULL, choices = NULL, selected = NULL)
+                                          )
+                                      )
                                   ),
-                                  div(class = "card-body p-4",
-                                      div(class = "mb-3",
-                                          selectizeInput("select_sum_plot_ref", 
-                                                      label = NULL, 
-                                                      choices = NULL, 
-                                                      selected = NULL,
-                                                      width = "100%")
-                                      ),
-                                      tags$style(HTML("
-        #select_sum_plot_ref {
-          height: 45px;
-          font-size: 1.1rem;
-        }
-      ")),
-                                      div(class = "plot-container",
+                                  div(class = "plot-container",
                                           withSpinner(
-                                            plotOutput("sum_plot", height = "500px"), 
+                                            plotOutput("sum_plot", height = "600px",width = "2060px"), 
                                             type = 7,
-                                            color = "#0d6efd"
-                                          ),
+                                            color = "#0d6efd"),
                                           uiOutput("attainment_caption")
                                       )
                                   )
                               )
-                       )
                      ),
                      
                      fluidRow(
