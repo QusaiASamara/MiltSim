@@ -1,4 +1,4 @@
-# Miltsim  
+# MiltSim  
 **Miltefosine Dose Optimization and Population Analysis**  
 
 ## Overview  
