@@ -1,6 +1,6 @@
 $PROB Verrest_pk_model
 $SET 
-end = 1368,
+end = 1368
 delta = 12
 
 $PARAM @annotated
@@ -22,6 +22,8 @@ WT = 70;
 HT = 70;
 SEX = 70;
 FLAG = 1;
+TSWITCH = 0 // Time after which to start calculating EOC AUC (e.g., day 58)
+
 
 
 $OMEGA @annotated
@@ -36,10 +38,11 @@ $CMT
 DEPOT
 CENT
 PERIPH
-AUC        
+AUC  
 TEC90
 Cmax_track
 Tmax_track
+AUCEOC
 
 $GLOBAL
 static double cumamt = 0;
@@ -90,7 +93,7 @@ double h0     = THETA9;
 double I50    = THETA10;
 
 F_DEPOT= CHECK;
-if(CHECK > 1 & TIME <= 168) {
+if(CHECK > 1 && TIME <= 168) {
   F_DEPOT = 1;
 }
 
@@ -105,7 +108,6 @@ Tmax_track_0 = 0;
 $ODE
 double CONC_CENT = CENT/V;
 double CONC_PER  = PERIPH/V3;
-double AUC_VAL   = AUC;
 
 
 
@@ -113,6 +115,12 @@ dxdt_DEPOT        = -KA*DEPOT;
 dxdt_CENT         = KA*DEPOT - KE*CENT - K23*CENT + K32*PERIPH;
 dxdt_PERIPH       = K23*CENT - K32*PERIPH;
 dxdt_AUC          = CONC_CENT;
+
+if(SOLVERTIME >= TSWITCH) {
+  dxdt_AUCEOC= CONC_CENT;
+} else {
+  dxdt_AUCEOC = 0;
+}
 
 dxdt_Cmax_track = 0;
 dxdt_Tmax_track = 0;
@@ -135,9 +143,20 @@ double IRES = CONC_CENT - IPRED;
 double IWRES = IRES/IPRED;
 double Cmax = Cmax_track;
 double Tmax = Tmax_track;
-double MIL = TEC90;  
 
+double AUC_accum = AUCEOC; // The accumulated AUC since TSWITCH
+double AUC_inf = 0;  // Initialize AUC to infinity
+
+// Only calculate AUC to infinity if we're past TSWITCH
+if(TIME >= TSWITCH) {
+  AUC_inf = AUC_accum + (CONC_CENT/KE);
+} else {
+  AUC_inf = 0; // Before TSWITCH, AUC is zero
+}
+
+
+double MIL = TEC90;  
 double h = h0 * (1- (MIL/(I50+MIL)));
 
 $CAPTURE
-CONC_CENT AMT TOEC90 AUC_VAL Cmax h Tmax FFM DDOS_calc COVF1 COVF2 F_DEPOT AGE WT HT SEX FLAG CL KE V 
+CONC_CENT AMT AUC_inf Cmax h Tmax FFM DDOS_calc COVF1 COVF2 F_DEPOT AGE WT HT SEX FLAG CL KE V 

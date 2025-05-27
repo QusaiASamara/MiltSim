@@ -1109,7 +1109,7 @@ server <- function(input, output, session) {
   
   output$tec90_limit <- renderValueBox({
     shiny::req(input$run_model)
-    
+    shiny::req(combined_regimens())
     valueBox(
       value = paste0(lower_ci_obs_TOEC90, " days"),
       subtitle = "Limit of the lower boundary of T>EC90",
@@ -1118,6 +1118,7 @@ server <- function(input, output, session) {
   
   output$auc_limit <- renderValueBox({
     shiny::req(input$run_model)
+    shiny::req(combined_regimens())
     valueBox(
       value = paste0(upper_ci_obs_AUC, " mg/L*day"),
       subtitle = "Limit of the higher boundary of AUC",
