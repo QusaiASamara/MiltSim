@@ -4,7 +4,9 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
                                  load_interval = NULL,
                                  main_freq,
                                  main_interval,
-                                 weight_bands = NULL, type= c("ref", "cacl"), upper,lower, end,delta) {  # Add weight_bands parameter
+                                 weight_bands = NULL, type= c("ref", "cacl"),
+                                 TSWITCH_val,
+                                 upper,lower, end,delta,mode) {  # Add weight_bands parameter
   
   id_count <- data$ID
   
@@ -100,6 +102,7 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
     data_set(NM_Allo) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
+    param(TSWITCH= (treatment_duration + TSWITCH_val)*24)%>%
     mrgsim(delta = delta, end = end * 24)%>%
     as.data.frame()
   
@@ -126,7 +129,7 @@ create_allom_dataset <- function(data, model, weight, seed, use_loading_dose = F
   }
 
   
-  Allometric_FFM <- create_bin(allometric_ffm, Time = treatment_duration,weight)
+  Allometric_FFM <- create_bin(allometric_ffm, Time = treatment_duration,weight,mode)
   
   upper_ci_obs_AUC <- ifelse(type == "ref", round(quantile(Allometric_FFM$AUC, 0.95), 0), upper) 
   lower_ci_obs_TOEC90 <-  ifelse(type == "ref", round(quantile(Allometric_FFM$TEC90, 0.05), 0), lower)

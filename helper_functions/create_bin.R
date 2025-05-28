@@ -3,18 +3,18 @@ get_mode <- function(x) {
   unique_x[which.max(tabulate(match(x, unique_x)))]
 }
 
-create_bin <- function(data,Time, weight) {
+create_bin <- function(data,Time, weight, mode) {
 
   data_name <- deparse(substitute(data))
   
   data <- data %>%
     group_by(ID) %>%
     mutate(TIME = TIME/24) %>%
-    filter(TIME == Time) %>%
+    filter(TIME == ifelse (mode =="rep", max(TIME),Time)) %>%
     mutate(
       TEC90 = TEC90 / 24,
       hazard = h/1.84,
-      AUC = AUC / 24,
+      AUC = ifelse(mode=="rep", AUC_inf/24, AUC/ 24),
       BIN = floor(WT) ## floor or round??
     ) %>%
     filter(BIN < weight) %>%

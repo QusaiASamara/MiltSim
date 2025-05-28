@@ -520,11 +520,13 @@ server <- function(input, output, session) {
       main_freq = mainta_freq,
       main_interval = mainta_interval,
       weight_bands = NULL, 
-      type = "ref", 
+      type = "ref",
+      TSWITCH_val = 0,
       upper = NULL,
       lower = NULL,
       end = input$End_sim,
-      delta = input$delta_sim)
+      delta = input$delta_sim,
+      mode = "defulat")
     
     
     
@@ -584,10 +586,12 @@ server <- function(input, output, session) {
                                     main_interval = maint_interval,
                                     weight_bands = weight_bands,
                                     type = "calc",
+                                    TSWITCH_val = 0,
                                     upper = upper_ci_obs_AUC,
                                     lower = lower_ci_obs_TOEC90,
                                     end = input$End_sim,
-                                    delta = input$delta_sim),
+                                    delta = input$delta_sim,
+                                    mode = "defulat"),
                                   "Conventional" = create_lin_dataset(
                                     data = data()$WHO_data_HT_WT_FFM,
                                     model = model(),
@@ -600,8 +604,12 @@ server <- function(input, output, session) {
                                     main_freq = maint_freq,
                                     main_interval = maint_interval,
                                     weight_bands = weight_bands,
+                                    TSWITCH_val = 0,
+                                    upper = upper_ci_obs_AUC,
+                                    lower = lower_ci_obs_TOEC90,
                                     end = input$End_sim,
-                                    delta = input$delta_sim),
+                                    delta = input$delta_sim,
+                                    mode = "defulat"),
                                   "Allometric_WB" = create_allometric_WB_dosing(
                                     data = data()$WHO_data_HT_WT_FFM,
                                     model = model(),
@@ -614,8 +622,12 @@ server <- function(input, output, session) {
                                     main_freq = maint_freq,
                                     main_interval = maint_interval,
                                     weight_bands = weight_bands,
+                                    TSWITCH_val = 0,
+                                    upper = upper_ci_obs_AUC,
+                                    lower = lower_ci_obs_TOEC90,
                                     end = input$End_sim,
-                                    delta = input$delta_sim),
+                                    delta = input$delta_sim,
+                                    mode = "defulat"),
                                   "costum_allometric_WB" = create_costum_allometric_WB_dosing(
                                     data = data()$WHO_data_HT_WT_FFM,
                                     model = model(),
@@ -629,10 +641,12 @@ server <- function(input, output, session) {
                                     main_freq = maint_freq,
                                     main_interval = maint_interval,
                                     weight_bands_load = weight_bands,
+                                    TSWITCH_val = 0,
                                     upper_limit = upper_ci_obs_AUC,
                                     lower_limit = lower_ci_obs_TOEC90,
                                     end = input$End_sim,
-                                    delta = input$delta_sim
+                                    delta = input$delta_sim,
+                                    mode = "defulat"
                                   ))
       
       # Add the generated regimen to the list with its name
@@ -1083,7 +1097,7 @@ server <- function(input, output, session) {
                                        names(data_frames)[names(data_frames) == input$select_sum_plot_ref])
     
     return(plot)
-  },res = 144) %>% bindCache(input$select_sum_plot,input$select_sum_plot_ref, combined_regimens(),input$tab_selected == "Pharmacokinetics")
+  }) %>% bindCache(input$select_sum_plot,input$select_sum_plot_ref, combined_regimens(),input$tab_selected == "Pharmacokinetics")
 
   output$attainment_caption <- renderUI({
     shiny::req(input$run_model)
@@ -1194,7 +1208,7 @@ server <- function(input, output, session) {
       )
     
     return(plot)
-  },res = 144) %>% bindCache(input$select_hazard_sumplot,input$select_hazard_sumplot_ref,
+  }) %>% bindCache(input$select_hazard_sumplot,input$select_hazard_sumplot_ref,
                              combined_regimens(),input$tab_selected == "pd")
   
   
@@ -1254,8 +1268,12 @@ server <- function(input, output, session) {
       main_interval = mainta_interval,
       weight_bands = NULL, 
       type = "ref", 
+      TSWITCH_val = 0,
       upper = NULL,
-      lower = NULL)
+      lower = NULL,
+      end = 200,
+      delta = 12,
+      mode = "defult")
     
     
     upper_ci_obs_AUC_ref <- ref_data_sens$upper_ci_obs_AUC
@@ -1304,8 +1322,12 @@ server <- function(input, output, session) {
                                   main_freq = maint_freq,
                                   main_interval = maint_interval,
                                   weight_bands_load = weight_bands,
+                                  TSWITCH_val = 0,
                                   upper_limit = upper_ci_obs_AUC_sens,
-                                  lower_limit = lower_ci_obs_TOEC90_sens)
+                                  lower_limit = lower_ci_obs_TOEC90_sens,
+                                  end = 200,
+                                  delta = 12,
+                                  mode = "defulat")
     
 
     return(generated_regimen)
@@ -1562,4 +1584,174 @@ server <- function(input, output, session) {
     
   })
   
+  
+  
+  ################################
+  ###  Contraception Analysis  ###
+  ################################
+  
+  model_rep <- eventReactive(input$model_rep, {
+    shiny::req(input$model_rep)
+    input$model_rep
+    if (input$model_rep == "L. Verrest (2023)") {
+      mod_MF_pk <- mread("helper_functions/Verrest_pk_model.cpp")
+      loadso(mod_MF_pk)  
+    } else if (input$model_rep == "Upload Own Model") {
+      shiny::req(input$pk_model_file_rep)
+      model_path <- input$pk_model_file_rep$datapath
+      own_model <- mread(model_path)
+      loadso(own_model)
+    } else {
+      NA
+    }
+  })
+  
+  regimen_data_rep <- regimen_server_rep("regimen_rep")
+  
+  combined_regimens_rep <- eventReactive(input$run_rep, {
+    # Get the single saved regimen
+    current_regimen <- regimen_data_rep$regimens()[[1]]
+    
+    if (is.null(current_regimen)) {
+      showNotification("No regimen found. Please add a regimen before running the model.", type = "warning")
+      return(NULL)
+    }
+    regimen_list <- list()
+    
+    
+    # Extract maintenance dose frequency and interval from the single regimen
+    mainta_freq <- current_regimen$maintenance_dose$frequency
+    mainta_interval <- current_regimen$maintenance_dose$interval
+    
+  
+    # Process the single regimen
+    regimen_label <- current_regimen$name
+    
+    # Extract values for current regimen
+    dosing_strategy <- current_regimen$strategy
+    use_loading_dose <- !is.null(current_regimen$loading_dose)
+    loading_dose_fixed <- if(use_loading_dose) current_regimen$loading_dose$fixed_dose else NULL
+    loading_freq <- if(use_loading_dose) current_regimen$loading_dose$frequency else 0
+    loading_interval <- if(use_loading_dose) current_regimen$loading_dose$interval else 0
+    maint_freq <- current_regimen$maintenance_dose$frequency
+    maint_interval <- current_regimen$maintenance_dose$interval
+    weight_bands <- if(use_loading_dose) current_regimen$loading_dose$weight_bands else NULL
+    custom_doses <- current_regimen$custom_doses
+    
+    
+    # Generate regimen based on dosing strategy
+    generated_regimen <- switch(dosing_strategy,
+                                "Allometric_FFM" = create_allom_dataset(
+                                  data = data()$WHO_data_HT_WT_FFM,
+                                  model = model_rep(),
+                                  weight = 200,
+                                  seed = 9119,
+                                  use_loading_dose = use_loading_dose,
+                                  fixed_load_dose = loading_dose_fixed,
+                                  load_freq = loading_freq,
+                                  load_interval = loading_interval,
+                                  main_freq = maint_freq,
+                                  main_interval = maint_interval,
+                                  weight_bands = weight_bands,
+                                  type = "calc",
+                                  TSWITCH_val = input$TSWITCH,
+                                  upper = input$AUC_target,
+                                  lower = 17,
+                                  end = 200*24,
+                                  delta = 24,
+                                  mode = "rep"),
+                                "Conventional" = create_lin_dataset(
+                                  data = data()$WHO_data_HT_WT_FFM,
+                                  model = model_rep(),
+                                  weight = 200,
+                                  seed = 9119,
+                                  use_loading_dose = use_loading_dose,
+                                  fixed_load_dose = loading_dose_fixed,
+                                  load_freq = loading_freq,
+                                  load_interval = loading_interval,
+                                  main_freq = maint_freq,
+                                  main_interval = maint_interval,
+                                  weight_bands = weight_bands,
+                                  TSWITCH_val = input$TSWITCH,
+                                  upper = input$AUC_target,
+                                  lower = 0,
+                                  end = 200,
+                                  delta = 24,
+                                  mode = "rep"),
+                                "Allometric_WB" = create_allometric_WB_dosing(
+                                  data = data()$WHO_data_HT_WT_FFM,
+                                  model = model_rep(),
+                                  weight = 200,
+                                  seed = 9119,
+                                  use_loading_dose = use_loading_dose,
+                                  fixed_load_dose = loading_dose_fixed,
+                                  load_freq = loading_freq,
+                                  load_interval = loading_interval,
+                                  main_freq = maint_freq,
+                                  main_interval = maint_interval,
+                                  weight_bands = weight_bands,
+                                  TSWITCH_val = input$TSWITCH,
+                                  upper = input$AUC_target,
+                                  lower = 0,
+                                  end = 200,
+                                  delta = 24,
+                                  mode = "rep"),
+                                "costum_allometric_WB" = create_costum_allometric_WB_dosing(
+                                  data = data()$WHO_data_HT_WT_FFM,
+                                  model = model_rep(),
+                                  custom_doses = custom_doses,
+                                  weight = 200,
+                                  seed = 9119,
+                                  use_loading_dose = use_loading_dose,
+                                  fixed_load_dose = loading_dose_fixed,
+                                  load_freq = loading_freq,
+                                  load_interval = loading_interval,
+                                  main_freq = maint_freq,
+                                  main_interval = maint_interval,
+                                  weight_bands_load = weight_bands,
+                                  TSWITCH_val = input$TSWITCH,
+                                  upper_limit = input$AUC_target,
+                                  lower_limit = 0,
+                                  end = 200,
+                                  delta = 24,
+                                  mode = "rep"
+                                ))
+    
+    return(generated_regimen)
+  })
+  
+  
+  output$target_attainment_plot_rep <- renderPlotly({
+    shiny::req(input$run_rep)
+    data_frames <- combined_regimens_rep()
+    
+    # Extract AUC_TOEC90 datasets from each list element
+    AUC_TOEC90_dataset <- data_frames[grep("^AUC_TOEC90_", names(data_frames))][[1]]%>%
+      rename_with(~ "PER_UPPER", starts_with("PER_UPPER")) %>%
+      rename_with(~ "FLAG", starts_with("FLAG")) %>%
+      rename_with(~ "DOSE", starts_with("DOSE"))
+    
+    # Create the ggplot
+    p <- ggplot(AUC_TOEC90_dataset, aes(x = BINNED_WT, y = PER_UPPER, group = FLAG)) + 
+      geom_line(linewidth = 0.8, na.rm = TRUE) + 
+      geom_point(aes(color = as.factor(DOSE)), size = 3) +
+      scale_color_discrete(name = "Dose (mg)") +
+      scale_x_discrete(breaks = c("<30", "40", "50", "60", "65+")) +
+      labs(
+        x = "Weight (kg)", 
+        y = "% of patients within limits",
+        title = "Target achievement of simulated patients' profiles"
+      ) + 
+      theme_bw() +
+      theme(
+        legend.position = "bottom",
+        strip.text = element_text(size = 12),
+        plot.title = element_text(face = "bold", size = 14),
+        axis.title = element_text(face = "bold"),
+        panel.grid.minor = element_blank()
+      )
+    
+    # Display the ggplot
+    print(p)
+  })
 }

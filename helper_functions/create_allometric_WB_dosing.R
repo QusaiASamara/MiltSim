@@ -6,7 +6,9 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
                                         main_freq,
                                         main_interval,
                                         weight_bands = NULL,
-                                        end,delta) {
+                                        TSWITCH_val,
+                                        upper,lower,
+                                        end,delta,mode) {
   
   
   id_count <- data$ID
@@ -115,6 +117,7 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
     data_set(All_WB_data) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
+    param(TSWITCH= (treatment_duration + TSWITCH_val)*24)%>%
     mrgsim(delta = delta, end = end * 24) %>%
     as.data.frame()
   
@@ -141,9 +144,9 @@ create_allometric_WB_dosing <- function(data, model, weight, seed, use_loading_d
   }
 
   
-  Allometric_WB <- create_bin(Allom_WB_model, Time = treatment_duration, weight)
+  Allometric_WB <- create_bin(Allom_WB_model, Time = treatment_duration, weight,mode)
   
-  AUC_TOEC90_Allometric_WB <- AUC_TOEC90_summary(Allometric_WB, upper_ci_obs_AUC, lower_ci_obs_TOEC90)
+  AUC_TOEC90_Allometric_WB <- AUC_TOEC90_summary(Allometric_WB, upper, lower)
   
   AUC_TOEC90_Allo_WB <- AUC_TOEC90_Allometric_WB %>% 
     group_by(FLAG_Allometric_WB, WT_BAND_Allom_WB_model) %>%

@@ -6,8 +6,10 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
                                                load_interval = NULL,
                                                main_freq,
                                                main_interval,
-                                               weight_bands_load = NULL, upper_limit,lower_limit,
-                                               end, delta) {
+                                               weight_bands_load = NULL,
+                                               TSWITCH_val,
+                                               upper_limit,lower_limit,
+                                               end, delta,mode) {
   
   # Get the number of flags from custom_doses
   num_flags <- custom_doses$num_flags
@@ -162,6 +164,7 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
     data_set(All_WB_data) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
+    param(TSWITCH= (treatment_duration + TSWITCH_val)*24)%>%
     mrgsim(delta = delta, end = end * 24) %>%
     as.data.frame()
   
@@ -188,7 +191,7 @@ create_costum_allometric_WB_dosing <- function(data, model, custom_doses, weight
   
   
   
-  Allometric_WB_custom <- create_bin(Allom_WB_custom_model, Time = treatment_duration, weight)
+  Allometric_WB_custom <- create_bin(Allom_WB_custom_model, Time = treatment_duration, weight,mode)
   
   Allometric_WB_custom <- Allometric_WB_custom %>% 
     mutate(

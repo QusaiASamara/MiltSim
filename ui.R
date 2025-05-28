@@ -515,7 +515,7 @@ fluidPage(
                                   ),
                                   div(class = "plot-container",
                                           withSpinner(
-                                            plotOutput("sum_plot", height = "600px",width = "2060px"), 
+                                            plotOutput("sum_plot"), 
                                             type = 7,
                                             color = "#0d6efd"),
                                           uiOutput("attainment_caption")
@@ -697,6 +697,61 @@ fluidPage(
                       h4("Pharmacokinetic Summary", class = "m-0")),
                   div(class = "card-body",
                       withSpinner(gt_output("pk_stat_sens"), type = 7)
+                  )
+              )
+            )
+          )
+        )
+      )
+    ),
+    tabPanel(
+      "Cotraception Analysis",
+      sidebarLayout(
+        sidebarPanel(
+          div(class = "card shadow-sm p-3 mb-3",
+              selectizeInput("model_rep", "Select Model",
+                             choices = c("L. Verrest (2023)", "Upload Own Model"),
+                             selected = "L. Verrest (2023)", width = "100%"),
+              conditionalPanel(
+                condition = "input.model_rep == 'Upload Own Model'",
+                fileInput("pk_model_file_rep", "Upload OWN Model", accept = c(".cpp"),
+                          placeholder = "Please upload a .cpp file")
+              )
+          ), 
+          div(class = "card shadow-sm p-3 mb-3",
+              h4("Build Dosing Regimen", class = "text-primary"),
+              tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css")),
+              regimen_modal_ui_rep("regimen_rep"),
+              hr(),
+                div(
+                  numericInput(
+                    inputId = "TSWITCH",
+                    label = "Contracpetion period (days)",
+                    value = NA
+                  ),
+                  numericInput(
+                    inputId = "AUC_target",
+                    label = "Reproductive Safety Threshold (mg*day/L)",
+                    value = NA
+                  )
+                )
+          ),
+          actionButton("run_rep", "Run Simulation", 
+                       class = "btn btn-success btn-lg w-100 mt-3")
+        ),
+        
+        mainPanel(
+          tabsetPanel(
+            tabPanel(
+              "Results",
+              h4("Results", class = "text-primary mb-3"),
+              
+              # Target Attainment Plot
+              div(class = "card shadow-sm mb-4",
+                  div(class = "card-header bg-primary text-white",
+                      h4("Target Attainment", class = "m-0")),
+                  div(class = "card-body p-0",
+                      withSpinner(plotlyOutput("target_attainment_plot_rep"), type = 7)
                   )
               )
             )

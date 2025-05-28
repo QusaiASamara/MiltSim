@@ -6,7 +6,9 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
                                main_freq,
                                main_interval,
                                weight_bands = NULL,
-                               end, delta) {
+                               TSWITCH_val,
+                               upper,lower,
+                               end, delta, mode) {
   
   id_count <- data$ID
   
@@ -88,6 +90,7 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
     data_set(NM_lin) %>%
     carry.out(a.u.g) %>%
     obsaug %>%
+    param(TSWITCH= (treatment_duration + TSWITCH_val)*24)%>%
     mrgsim(delta = delta, end = end * 24) %>%
     as.data.frame()
   
@@ -112,10 +115,10 @@ create_lin_dataset <- function(data, model,weight, seed,  use_loading_dose = FAL
       mutate( AMT = max(AMT))
   }
     
-  conventional  <- create_bin(conventional_model, Time = treatment_duration, weight)
+  conventional  <- create_bin(conventional_model, Time = treatment_duration, weight, mode)
     
     
-  AUC_TOEC90_conventional <- AUC_TOEC90_summary(conventional, upper_ci_obs_AUC, lower_ci_obs_TOEC90)
+  AUC_TOEC90_conventional <- AUC_TOEC90_summary(conventional, upper, lower)
     
   
   # DOSE_summary <- AUC_TOEC90_conventional %>%
