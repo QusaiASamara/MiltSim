@@ -28,25 +28,35 @@ server <- function(input, output, session) {
         as.integer(sample.int(1e6, 1))
       }
       
+      common_params <- list(input$min_age, input$max_age, input$min_WT, input$max_WT, input$min_HT, input$max_HT)
+      names(common_params) <- c("minage", "maxage", "minWT", "maxWT", "minHT", "maxHT")
       
-      params <- list(
-        subj_num = input$subj_num,
-        seed = seed_value,
-        minage = input$min_age,
-        maxage = input$max_age,
-        minWT = input$min_WT,
-        maxWT = input$max_WT,
-        minHT = input$min_HT,
-        maxHT = input$max_HT,
-        age_unit = input$age_unit
-      )
-      
-      # Load data based on selected population
       data_list <- switch(input$population,
-                          "Pediatric Eastern African Virtual VL Population" = do.call(load_East_Africa_pop, params),
-                          "WHO Virtual Population" = do.call(load_WHO_pop, params))
-      
-      return(data_list)
+                          "Pediatric Eastern African Virtual VL Population" = load_East_Africa_pop(
+                            subj_num = input$subj_num, seed = seed_value, age_unit = input$age_unit,
+                            minage = common_params$minage, maxage = common_params$maxage,
+                            minWT = common_params$minWT, maxWT = common_params$maxWT,
+                            minHT = common_params$minHT, maxHT = common_params$maxHT
+                          ),
+                          "WHO Virtual Population" = load_WHO_pop(
+                            subj_num = input$subj_num, seed = seed_value, age_unit = input$age_unit,
+                            minage = common_params$minage, maxage = common_params$maxage,
+                            minWT = common_params$minWT, maxWT = common_params$maxWT,
+                            minHT = common_params$minHT, maxHT = common_params$maxHT
+                          ),
+                          "Adult Eastern African Virtual VL Population" = load_imported_pop(
+                            data = "WHO_Data/joint_child_adult_sim_pop.csv",
+                            minage = common_params$minage, maxage = common_params$maxage,
+                            minWT = common_params$minWT, maxWT = common_params$maxWT,
+                            minHT = common_params$minHT, maxHT = common_params$maxHT
+                          ),
+                          "Female Eastern African Virtual VL Population" = load_imported_pop(
+                            data = "WHO_Data/joint_female.csv",
+                            minage = common_params$minage, maxage = common_params$maxage,
+                            minWT = common_params$minWT, maxWT = common_params$maxWT,
+                            minHT = common_params$minHT, maxHT = common_params$maxHT
+                          )
+      )
       
       
     } else if (input$population_type == "import") {

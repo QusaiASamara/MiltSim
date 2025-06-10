@@ -69,7 +69,7 @@ target_attainment_sumplots <- function(ref_data, binned_df, dosing_strategy, ref
       geom_text(
         data = data,
         aes(x = as.factor(BIN), y = y_label_pos, label = COUNT_BIN_bin),
-        size = 5,
+        size = 3,
         vjust = 0.5
       ) +
       theme_bw() +
@@ -78,7 +78,7 @@ target_attainment_sumplots <- function(ref_data, binned_df, dosing_strategy, ref
         plot.subtitle = element_text(hjust = 0, size = 13, color = "gray40"),
         axis.title = element_text(size = 15, face = "bold"),
         axis.text = element_text(size = 15, color = "black"),
-        axis.text.x = element_text(size = 17, angle = 0, hjust = 0.5),
+        axis.text.x = element_text(size = 12, angle = 0, hjust = 0.5),
         legend.position = "right"
       )
   }

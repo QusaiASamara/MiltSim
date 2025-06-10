@@ -22,10 +22,11 @@ create_bin <- function(data,Time, weight, mode) {
     arrange(BIN, WT, AGE) %>%
     mutate(
       BINNED_WT = factor(case_when(
-        BIN < 6 ~ "< 6 kg",
-        BIN >= 6 & BIN < 10 ~ paste0("0", BIN, " kg"),
-        BIN >= 10 & BIN < 100 ~ paste0(BIN, " kg"),
-        BIN >= 100 ~ "100 kg +"
+        BIN < 6 ~ "< 6",
+        BIN >= 6 & BIN < 10 ~ paste0("0", BIN),
+        BIN >= 10 & BIN < 30 ~ paste0(BIN),
+        BIN >= 30 & BIN < 70 ~ paste0(BIN),
+        BIN >= 70 ~ "70+"
       ))) %>%
     group_by(BINNED_WT, FLAG) %>%
     mutate(DOSE_G = round(get_mode(AMT), 1)) %>%

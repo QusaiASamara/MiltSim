@@ -1,4 +1,4 @@
-load_imported_pop <- function(data) {
+load_imported_pop <- function(data,minage,maxage,minWT,maxWT,minHT,maxHT) {
   
   # Load the data
   imp_data <- fread(data)
@@ -13,7 +13,10 @@ load_imported_pop <- function(data) {
            A50GAM = A50^ALGAMMA,
            FFM = ((AGEGAM + ALALPHA * A50GAM) / (AGEGAM + A50GAM)) * 
              ((WHSMAX * ((HT / 100)^2) * WT) / (WHS50 * ((HT / 100)^2) + WT))) %>%
-    dplyr::select(ID, AGE, SEX, HT, WT, FFM)
+    dplyr::select(ID, AGE, SEX, HT, WT, FFM)%>%
+    filter(AGE >= minage & AGE <= maxage) %>%
+    filter(WT > minWT & WT < maxWT)%>%
+    filter(HT > minHT & HT < maxHT)
   
   
   WHO_data_HT_WT_FFM_long <- WHO_data_HT_WT_FFM %>%

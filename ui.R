@@ -130,35 +130,46 @@ fluidPage(
                 condition = "input.population_type == 'predefined'",
                 selectizeInput("population", "Select Population",
                             choices = c("Pediatric Eastern African Virtual VL Population", 
-                                        "WHO Virtual Population"), 
+                                        "WHO Virtual Population",
+                                        "Adult Eastern African Virtual VL Population",
+                                        "Female Eastern African Virtual VL Population"), 
                             width = "100%"),
                 hr(class = "my-3"),
                 
-                div(class = "form-group",
-                    radioGroupButtons(
-                      inputId = "age_unit",
-                      label = "Age Unit",
-                      choices = c("years", "months"),
-                      justified = TRUE,
-                      status = "primary",
-                      checkIcon = list(yes = icon("check-circle"))
-                    )
-                ),
-                
-                numericInput("subj_num", "Individuals per Age Unit", 
-                             value = 10, min = 1, step = 1, width = "100%"),
-                hr(class = "my-3"),
-                
-                div(class = "d-flex align-items-center",
-                    materialSwitch("use_seed", "Reproduce Population", 
-                                   value = FALSE, status = "primary"),
+                conditionalPanel(
+                  condition = "input.population == 'Pediatric Eastern African Virtual VL Population' || input.population == 'WHO Virtual Population'",
+                  div(class = "form-group",
+                      radioGroupButtons(
+                        inputId = "age_unit",
+                        label = "Age Unit",
+                        choices = c("years", "months"),
+                        justified = TRUE,
+                        status = "primary",
+                        checkIcon = list(yes = icon("check-circle"))
+                      )
+                  )
                 ),
                 
                 conditionalPanel(
-                  condition = "input.use_seed == true",
-                  div(class = "mt-3",
-                      numericInput("seed_value", "Seed Value", value = 9119, 
-                                   min = 1, step = 1, width = "100%")
+                  condition = "input.population == 'Pediatric Eastern African Virtual VL Population' || input.population == 'WHO Virtual Population'",
+                  numericInput("subj_num", "Individuals per Age Unit", 
+                               value = 10, min = 1, step = 1, width = "100%"),
+                  hr(class = "my-3")
+                ),
+                
+                conditionalPanel(
+                  condition = "input.population == 'Pediatric Eastern African Virtual VL Population' || input.population == 'WHO Virtual Population'",
+                  div(class = "d-flex align-items-center",
+                      materialSwitch("use_seed", "Reproduce Population", 
+                                     value = FALSE, status = "primary"),
+                  ),
+                  
+                  conditionalPanel(
+                    condition = "input.use_seed == true && (input.population == 'Pediatric Eastern African Virtual VL Population' || input.population == 'WHO Virtual Population')",
+                    div(class = "mt-3",
+                        numericInput("seed_value", "Seed Value", value = 9119, 
+                                     min = 1, step = 1, width = "100%")
+                    )
                   )
                 ),
                 
