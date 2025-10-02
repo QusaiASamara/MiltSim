@@ -66,7 +66,7 @@ server <- function(input, output, session) {
       file_path <- input$upload_csv$datapath
       
       # Load the imported population data
-      data_list <- load_imported_pop(file_path)
+      data_list <- load_imported_pop(file_path,0,300,0,300,0,300)
       
       return(data_list)
     }
