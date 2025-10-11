@@ -348,7 +348,7 @@ fluidPage(
                 numericInput(
                   inputId = "End_sim",
                   label = "End of Simulation (days)",
-                  value = 56,
+                  value = 60,
                   min = 1
                 ),
                 

@@ -65,13 +65,14 @@ pk_summary <- function(data_stat,treatment_duration) {
 
   
   TOEC_90_Dlast <- data %>%
-    group_by(TIME) %>%
-    filter(TIME == treatment_duration) %>%
+    group_by(ID) %>%
+    filter(TIME == max(TIME)) %>%
+    ungroup()%>%
     summarise(
       Median = round(median(TEC90, na.rm = TRUE),2),  # mg*day/L
       IQR_low = round(quantile(TEC90, 0.25, na.rm = TRUE),2),
       IQR_upp = round(quantile(TEC90, 0.75, na.rm = TRUE),2)) %>%
-    mutate(Metric = "T>EC90_EOT (days)")
+    mutate(Metric = "T>EC90 (days)")
   
     
     TEC90 <- data %>%
@@ -101,10 +102,10 @@ pk_summary <- function(data_stat,treatment_duration) {
   total_summary <- calculate_metrics(data_tot, treatment_duration)
   
   # Merge summaries into a single table
-  result_table <- total_summary %>%
+  result_table <- child_summary %>%
     rename( children = Value) %>%
     left_join(adult_summary %>% rename(adults = Value), by = "Metric") %>%
-    left_join(child_summary %>% rename(total = Value), by = "Metric")
+    left_join(total_summary %>% rename(total = Value), by = "Metric")
   
   colnames(result_table) <- c(
     "Parameters",

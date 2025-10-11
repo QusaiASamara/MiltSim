@@ -50,8 +50,9 @@ pk_summary_sens <- function(data_stat,treatment_duration) {
       mutate(Metric = "AUC0_EOT (mg*day/L)")
     
     TOEC_90_Dlast <- data %>%
-      group_by(TIME) %>%
-      filter(TIME == treatment_duration) %>%
+      group_by(ID) %>%
+      filter(TIME == max(TIME)) %>%
+      ungroup()%>%
       summarise(
         Median = round(median(TEC90, na.rm = TRUE),2),  # mg*day/L
         IQR_low = round(quantile(TEC90, 0.25, na.rm = TRUE),2),

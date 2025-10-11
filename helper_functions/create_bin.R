@@ -9,7 +9,8 @@ create_bin <- function(data,Time, weight, mode) {
   
   data <- data %>%
     group_by(ID) %>%
-    mutate(TIME = TIME/24) %>%
+    mutate(TIME = TIME/24,
+           TEC90= TEC90[TIME == max(TIME)]) %>%
     filter(TIME == ifelse (mode =="rep", max(TIME),Time)) %>%
     mutate(
       TEC90 = TEC90 / 24,
