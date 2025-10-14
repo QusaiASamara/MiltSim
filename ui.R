@@ -241,7 +241,33 @@ fluidPage(
                       tags$li("Ensure all required columns are present")
                     )
                   )
+                ),
+                div(class = "mt-4",
+                    actionButton("show_inputs_imp", "Customize Covariates", 
+                                 icon = icon("sliders"),
+                                 class = "btn btn-outline-primary btn-block")
+                ),
+                div(
+                  id = "covariate_panel_imp",
+                  style = "display: none;",
+                  div(class = "mt-3 mb-2",
+                      h5("Covariate Ranges", style = "color: #2C3E50;")
+                  ),
+                  
+                  fluidRow(
+                    column(6, numericInput("min_age_imp", "Min Age (Years)", value = 0)),
+                    column(6, numericInput("max_age_imp", "Max Age (Years)", value = 100))
+                  ),
+                  fluidRow(
+                    column(6, numericInput("min_WT_imp", "Min Weight (kg)", value = 0)),
+                    column(6, numericInput("max_WT_imp", "Max Weight (kg)", value = 200))
+                  ),
+                  fluidRow(
+                    column(6, numericInput("min_HT_imp", "Min Height (cm)", value = 0)),
+                    column(6, numericInput("max_HT_imp", "Max Height (cm)", value = 250))
+                  )
                 )
+                
               ),
               
               # Action buttons

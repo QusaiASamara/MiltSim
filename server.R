@@ -10,6 +10,10 @@ server <- function(input, output, session) {
     toggle("covariate_panel")
   })
   
+  observeEvent(input$show_inputs_imp, {
+    toggle("covariate_panel_imp")
+  })
+  
   
   data <- eventReactive(input$go_button, {
     if (input$population_type == "predefined") {
@@ -66,7 +70,9 @@ server <- function(input, output, session) {
       file_path <- input$upload_csv$datapath
       
       # Load the imported population data
-      data_list <- load_imported_pop(file_path,0,300,0,300,0,300)
+      data_list <- load_imported_pop(file_path,input$min_age_imp,input$max_age_imp,
+                                     input$min_WT_imp,input$max_WT_imp,input$min_HT_imp,
+                                     input$max_HT_imp)
       
       return(data_list)
     }
