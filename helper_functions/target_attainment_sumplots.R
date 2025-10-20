@@ -57,7 +57,7 @@ target_attainment_sumplots <- function(ref_data, binned_df, dosing_strategy, ref
         subtitle = sprintf("%s - %.1f%% within reference bounds", metric, pct_in_bounds),
         y = ifelse(metric == "AUC", 
                    "AUC at EOT (mg*day/L)", 
-                   "T>EC90 at EOT (days)"),
+                   "T>EC90 (days)"),
         fill = "WT_BAND"
       ) +
       geom_hline(
