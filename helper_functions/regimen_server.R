@@ -22,6 +22,19 @@ regimen_server <- function(id) {
         size = "l",
         easyClose = TRUE,
         
+        materialSwitch(ns("use_dosage_optimization"), 
+                       "Enable Dosage Form Optimization mode", 
+                       value = FALSE),
+        
+        conditionalPanel(
+          condition = sprintf("input['%s'] == true", ns("use_dosage_optimization")),
+          numericInput(ns("custom_dose_strength"), 
+                       "Custom Dose Strength (mg)", 
+                       value = NULL, 
+                       min = 1),          
+          helpText("Leave empty or set to NA for reference (50 mg + 10 mg tablets)"),
+        ),
+        
         textInput(ns("regimen_name"), "Regimen Name", ""),
         selectInput(ns("dosing_strategy"), "Dosing Strategy",
                     choices = c("Allometric FFM-based" = "Allometric_FFM",
@@ -404,6 +417,8 @@ regimen_server <- function(id) {
       new_regimen <- list(
         id = regimen_id,
         name = input$regimen_name,
+        use_dosage_optimization = input$use_dosage_optimization,
+        custom_dose_strength = input$custom_dose_strength,
         strategy = input$dosing_strategy,
         loading_dose = if (input$include_loading) {
           list(

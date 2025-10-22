@@ -708,6 +708,7 @@ server <- function(input, output, session) {
                                   ))
       
       # Add the generated regimen to the list with its name
+      # regimen_list[["Reference"]] <- ref_data
       regimen_list[[regimen_label]] <- generated_regimen
     }
     return(regimen_list)
@@ -1071,6 +1072,8 @@ server <- function(input, output, session) {
     shiny::req(combined_regimens())
     shiny::req(input$tab_selected == "Pharmacokinetics")
     
+    all_regimens <- regimen_data$regimens()
+    
     data_frames <- combined_regimens()
     
     
@@ -1082,20 +1085,64 @@ server <- function(input, output, session) {
     lows <- c()
     upps <- c()
     
-    # Calculate statistics for each regimen
-    for (regimen in regimens) {
-      df <- AUC_TOEC90_datasets[[regimen]][[1]]  # Get the data for current regimen
+    
+    use_optimization <-    isTRUE(all_regimens[[1]]$use_dosage_optimization)
+
+    if (use_optimization) {
       
-      # Calculate percentages
-      low_percent <- round(100 - (sum(df[, grep("^COUNT_LOWER", names(df))]) / 
-                                    sum(df[, grep("^COUNT_BIN", names(df))]) * 100), 2)
+      # Calculate reference pill count
+      df_ref <- AUC_TOEC90_datasets[[regimens[1]]][[1]]
       
-      upp_percent <- round(100 - (sum(df[, grep("^COUNT_UPPER", names(df))]) / 
-                                    sum(df[, grep("^COUNT_BIN", names(df))]) * 100), 2)
+      ref_summary <- df_ref %>%
+        mutate(Pillcount = calculate_pillcount(DOSE_Allometric_FFM, NA)) %>%
+        group_by(BINNED_WT) %>%
+        summarise(
+          ref_pill = mean(Pillcount, na.rm = TRUE),
+          .groups = "drop"
+        ) %>% 
+        select(BINNED_WT, ref_pill)
       
-      lows <- c(lows, low_percent)
-      upps <- c(upps, upp_percent)
-    } 
+      # Calculate statistics for each regimen with pill count optimization
+      for (regimen in regimens) {
+        df_current <- AUC_TOEC90_datasets[[regimen]][[1]]
+        
+        current_regimen <- all_regimens[[regimen]]
+        custom_strength <- current_regimen$custom_dose_strength  
+    
+        df <- df_current %>% ungroup() %>%
+          mutate(Pillcount = calculate_pillcount(.[[grep("^DOSE_", names(.))]], custom_strength)) %>%
+          left_join(ref_summary, by = "BINNED_WT")
+        
+        # Calculate percentages with pill burden adjustment
+        low_percent <- round(0.9 * (100 - (sum(df[, grep("^COUNT_LOWER", names(df))]) /
+                                             sum(df[, grep("^COUNT_BIN", names(df))]) * 100)) +
+                               (0.1 * 100 * ((sum(df$ref_pill) - sum(df$Pillcount)) /
+                                               sum(df$ref_pill))), 2)
+        
+        upp_percent <- round(0.9 * (100 - (sum(df[, grep("^COUNT_UPPER", names(df))]) / 
+                                             sum(df[, grep("^COUNT_BIN", names(df))]) * 100)) +
+                               (0.1 * 100 * ((sum(df$ref_pill) - sum(df$Pillcount)) /
+                                               sum(df$ref_pill))), 2)
+        
+        lows <- c(lows, low_percent)
+        upps <- c(upps, upp_percent)
+      }
+      
+    } else {
+      # ORIGINAL CODE (no dosage optimization)
+      for (regimen in regimens) {
+        df_current <- AUC_TOEC90_datasets[[regimen]][[1]]
+        
+        # Calculate percentages (original method)
+        low_percent <- round(100 - (sum(df_current[, grep("^COUNT_LOWER", names(df_current))]) / 
+                                      sum(df_current[, grep("^COUNT_BIN", names(df_current))]) * 100), 2) 
+        upp_percent <- round(100 - (sum(df_current[, grep("^COUNT_UPPER", names(df_current))]) / 
+                                      sum(df_current[, grep("^COUNT_BIN", names(df_current))]) * 100), 2)
+        
+        lows <- c(lows, low_percent)
+        upps <- c(upps, upp_percent)
+      }
+    }
     
     result_df <- data.frame(
       regimen_name = regimens,
@@ -1125,6 +1172,8 @@ server <- function(input, output, session) {
     # Return as HTML
     HTML(table_html)
   })
+  
+  
   output$sum_plot <- renderPlot({
     shiny::req(input$run_model)
     shiny::req(input$select_sum_plot)
