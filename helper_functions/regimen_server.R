@@ -22,12 +22,15 @@ regimen_server <- function(id) {
         size = "l",
         easyClose = TRUE,
         
-        materialSwitch(ns("use_dosage_optimization"), 
-                       "Enable Dosage Form Optimization mode", 
-                       value = FALSE),
+        selectInput(ns("optimization_mode"),
+                    "Select Optimization Mode",
+                    choices = c("Regular Mode" = "regular",
+                                "Dosage Form Optimization" = "dosage_form",
+                                "Treatment Shortening" = "treatment_shortening"),
+                    selected = "regular"),
         
         conditionalPanel(
-          condition = sprintf("input['%s'] == true", ns("use_dosage_optimization")),
+          condition = sprintf("input['%s'] == 'dosage_form'", ns("optimization_mode")),
           numericInput(ns("custom_dose_strength"), 
                        "Custom Dose Strength (mg)", 
                        value = NULL, 
@@ -417,7 +420,7 @@ regimen_server <- function(id) {
       new_regimen <- list(
         id = regimen_id,
         name = input$regimen_name,
-        use_dosage_optimization = input$use_dosage_optimization,
+        optimization_mode = input$optimization_mode,
         custom_dose_strength = input$custom_dose_strength,
         strategy = input$dosing_strategy,
         loading_dose = if (input$include_loading) {

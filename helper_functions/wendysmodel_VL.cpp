@@ -39,6 +39,7 @@ TEC90   : 5 MF Time to reach 90% of EC90 (hr)
 Cmax_track : 6 MF Cmax (mg/L)
 Tmax_track : 7 MF Tmax (hr)
 AUCEOC : 8 AUCEOC
+  
 
   
   
@@ -62,6 +63,7 @@ double h0     = THETA9;
 double I50    = THETA10;
 
 
+
 if(ID != last_id) {
   cumamt = 0;
   last_id = ID;
@@ -69,6 +71,11 @@ if(ID != last_id) {
 
 if(EVID == 1) {
   cumamt += AMT;
+}
+
+if(ID != last_id_ec90) {
+  time_to_ec90 = -1;
+  last_id_ec90 = ID;
 }
 
 double CDOSE = cumamt/WT;
@@ -96,6 +103,7 @@ CENT_0 = 0;
 Cmax_track_0= 0; 
 Tmax_track_0 = 0; 
 
+
 $GLOBAL
 #define A1 (DEPO) 
 #define A2 (CENT) 
@@ -103,6 +111,9 @@ $GLOBAL
 #define CONC_CENT (CENT/V2)
 static double cumamt = 0;
 static double last_id = -1;
+static double time_to_ec90 = -1;  
+static double last_id_ec90 = -1;  
+
 
 
 $ODE
@@ -124,9 +135,12 @@ if(SOLVERTIME >= TSWITCH) {
 }
 
 
-
 double RT1 = 0;
 if(CONC_CENT > EC90 && SOLVERTIME > 0) RT1 = 1; //https://github.com/metrumresearchgroup/mrgsolve/issues/375
+
+if(time_to_ec90 < 0 && CONC_CENT > EC90 && SOLVERTIME > 0) {
+  time_to_ec90 = SOLVERTIME;
+}
 
 dxdt_TEC90 = RT1;
 
@@ -134,6 +148,7 @@ $TABLE
 double TOEC90 = TEC90;
 double Cmax = Cmax_track;
 double Tmax = Tmax_track;
+double T_EC90 = time_to_ec90;  
 
 double MIL = TEC90;  
 
@@ -151,4 +166,4 @@ if(TIME >= TSWITCH) {
 
 
 $CAPTURE
-A1 A2 A3 CONC_CENT TOEC90 AUC_inf MFW1 MFDOSE F_DEPO Cmax Tmax WT HT AGE FFM SEX FLAG AMT h CDOSE
+A1 A2 A3 CONC_CENT T_EC90 TOEC90 AUC_inf MFW1 MFDOSE F_DEPO Cmax Tmax WT HT AGE FFM SEX FLAG AMT h CDOSE

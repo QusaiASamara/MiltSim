@@ -1072,10 +1072,16 @@ server <- function(input, output, session) {
     shiny::req(combined_regimens())
     shiny::req(input$tab_selected == "Pharmacokinetics")
     
+    
     all_regimens <- regimen_data$regimens()
     
     data_frames <- combined_regimens()
     
+    Utility_score_mode <-all_regimens[[1]]$optimization_mode
+    
+    TEC90_datasets <- lapply(data_frames, function(lst) {
+      lst[grep("^sumplot", names(lst))]
+    })
     
     AUC_TOEC90_datasets <- lapply(data_frames, function(lst) {
       lst[grep("^AUC_TOEC90_", names(lst))]
@@ -1084,11 +1090,10 @@ server <- function(input, output, session) {
     regimens <- names(data_frames)
     lows <- c()
     upps <- c()
+    lows_TEC90 <- c()
     
-    
-    use_optimization <-    isTRUE(all_regimens[[1]]$use_dosage_optimization)
 
-    if (use_optimization) {
+    if (Utility_score_mode == "dosage_form") {
       
       # Calculate reference pill count
       df_ref <- AUC_TOEC90_datasets[[regimens[1]]][[1]]
@@ -1128,7 +1133,7 @@ server <- function(input, output, session) {
         upps <- c(upps, upp_percent)
       }
       
-    } else {
+    } else if (Utility_score_mode == "regular") {
       # ORIGINAL CODE (no dosage optimization)
       for (regimen in regimens) {
         df_current <- AUC_TOEC90_datasets[[regimen]][[1]]
@@ -1141,33 +1146,104 @@ server <- function(input, output, session) {
         
         lows <- c(lows, low_percent)
         upps <- c(upps, upp_percent)
+        } 
+      }else if (Utility_score_mode == "treatment_shortening"){
+        for (regimen in regimens) {
+                  # Treatment shortening mode code here
+        df_current_TEC90 <- TEC90_datasets[[regimen]][[1]]
+        df_current <- AUC_TOEC90_datasets[[regimen]][[1]]
+        
+        T_EC90_data <- df_current_TEC90 %>% 
+          mutate(
+            LOWER_TEC90 = ifelse(T_EC90 < 3, 1, 0),
+          )
+        
+        basic_summary <- T_EC90_data %>% 
+          group_by(BINNED_WT, FLAG) %>% 
+          mutate(
+            COUNT_Lower_TEC90= sum(LOWER_TEC90), 
+            COUNT_BIN = n(),
+          ) %>% 
+          filter(row_number() == 1) %>% 
+          ungroup() %>% 
+          mutate(
+            PER_LOWER= 100 - ((COUNT_Lower_TEC90) / COUNT_BIN * 100)
+          ) %>% 
+          arrange(BINNED_WT)
+        
+        
+        upp_percent <- round(100 - (sum(df_current[, grep("^COUNT_UPPER", names(df_current))]) / 
+                                      sum(df_current[, grep("^COUNT_BIN", names(df_current))]) * 100), 2)
+        
+        
+        low_percent <- round(100 - (sum(df_current[, grep("^COUNT_LOWER", names(df_current))]) / 
+                                      sum(df_current[, grep("^COUNT_BIN", names(df_current))]) * 100), 2) 
+        
+        low_percent_TEC90 <- round(100 - (sum(basic_summary[, grep("^COUNT_Lower_TEC90", names(basic_summary))]) / 
+                                            sum(basic_summary[, grep("^COUNT_BIN", names(basic_summary))]) * 100), 2) 
+        
+        lows <- c(lows, low_percent)
+        upps <- c(upps, upp_percent)
+        lows_TEC90 <- c(lows_TEC90, low_percent_TEC90)
+        
+        }
       }
+    
+    
+    if (Utility_score_mode == "treatment_shortening") {
+      result_df <- data.frame(
+        regimen_name = regimens,
+        lower_limit_TOEC90 = lows,
+        upper_limit_AUC = upps,
+        lower_limit_TEC90 = lows_TEC90
+      ) 
+      
+      table_html <- result_df %>%
+        knitr::kable(
+          col.names = c(
+            "Regimen Name",
+            "Lower Limit of T>EC90 (%)",
+            "Upper Limit of AUC (%)",
+            "Lower Limit of T≥EC90 ≥3h (%)"),
+          align = c('l', 'c', 'c', 'c'),
+          digits = 2,
+          format = "html"
+        ) %>%
+        kableExtra::kable_styling(
+          bootstrap_options = c("striped", "hover", "condensed"),
+          full_width = TRUE,
+          position = "center"
+        ) %>%
+        kableExtra::row_spec(0, bold = TRUE, background = "#f8f9fa") %>%
+        kableExtra::column_spec(1, bold = TRUE) %>%
+        kableExtra::add_header_above(c(" " = 1, "Target Attainment Metrics" = 3))
+      
+    } else {
+      result_df <- data.frame(
+        regimen_name = regimens,
+        lower_limit_TEC90 = lows,
+        upper_limit_AUC = upps
+      ) 
+      
+      table_html <- result_df %>%
+        knitr::kable(
+          col.names = c(
+            "Regimen Name",
+            "Lower Limit of T>EC90 (%)",
+            "Upper Limit of AUC (%)"),
+          align = c('l', 'c', 'c'),
+          digits = 2,
+          format = "html"
+        ) %>%
+        kableExtra::kable_styling(
+          bootstrap_options = c("striped", "hover", "condensed"),
+          full_width = TRUE,
+          position = "center"
+        ) %>%
+        kableExtra::row_spec(0, bold = TRUE, background = "#f8f9fa") %>%
+        kableExtra::column_spec(1, bold = TRUE) %>%
+        kableExtra::add_header_above(c(" " = 1, "Target Attainment Metrics" = 2))
     }
-    
-    result_df <- data.frame(
-      regimen_name = regimens,
-      lower_limit_TEC90 = lows,
-      upper_limit_AUC = upps
-    ) 
-    
-    table_html <- result_df %>%
-      knitr::kable(
-        col.names = c(
-          "Regimen Name",
-          "Lower Limit of T>EC90 (%)",
-          "Upper Limit of AUC (%)"),
-        align = c('l', 'c', 'c'),
-        digits = 2,
-        format = "html"
-      ) %>%
-      kableExtra::kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed"),
-        full_width = TRUE,
-        position = "center"
-      ) %>%
-      kableExtra::row_spec(0, bold = TRUE, background = "#f8f9fa") %>%
-      kableExtra::column_spec(1, bold = TRUE) %>%
-      kableExtra::add_header_above(c(" " = 1, "Target Attainment Metrics" = 2))
     
     # Return as HTML
     HTML(table_html)
@@ -1181,8 +1257,12 @@ server <- function(input, output, session) {
     shiny::req(combined_regimens())
     shiny::req(input$tab_selected == "Pharmacokinetics")
     
+
+    all_regimens <- regimen_data$regimens()
+    
     data_frames <- combined_regimens()
     
+    Utility_score_mode <-all_regimens[[1]]$optimization_mode
     
     sumplot_datasets <- lapply(data_frames, function(lst) {
       lst[grep("^sumplot", names(lst))]
@@ -1198,11 +1278,19 @@ server <- function(input, output, session) {
     
     
     
-    plot <- target_attainment_sumplots(ref_data = sumplot_datasets[[input$select_sum_plot_ref]][["sumplot"]],
+    if (Utility_score_mode == "treatment_shortening") {
+      plot <- target_attainment_sumplots_treatment_shortening(ref_data = sumplot_datasets[[input$select_sum_plot_ref]][["sumplot"]],
+                                                              binned_df = sumplot_datasets[[input$select_sum_plot]][["sumplot"]],
+                                                              dosing_strategy = names(data_frames)[names(data_frames) == input$select_sum_plot],
+                                                              names(data_frames)[names(data_frames) == input$select_sum_plot_ref])
+    }else{
+      plot <- target_attainment_sumplots(ref_data = sumplot_datasets[[input$select_sum_plot_ref]][["sumplot"]],
                                        binned_df = sumplot_datasets[[input$select_sum_plot]][["sumplot"]],
                                        dosing_strategy = names(data_frames)[names(data_frames) == input$select_sum_plot],
                                        names(data_frames)[names(data_frames) == input$select_sum_plot_ref])
     
+    }
+ 
     return(plot)
   }) %>% bindCache(input$select_sum_plot,input$select_sum_plot_ref, combined_regimens(),input$tab_selected == "Pharmacokinetics")
 

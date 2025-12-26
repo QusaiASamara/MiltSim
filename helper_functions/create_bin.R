@@ -14,6 +14,7 @@ create_bin <- function(data,Time, weight, mode) {
     filter(TIME == ifelse (mode =="rep", max(TIME),Time)) %>%
     mutate(
       TEC90 = TEC90 / 24,
+      T_EC90 = T_EC90 / 24,
       hazard = h/1.84,
       AUC = ifelse(mode=="rep", AUC_inf/24, AUC/ 24),
       BIN = floor(WT) ## floor or round??
