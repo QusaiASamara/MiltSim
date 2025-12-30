@@ -27,7 +27,8 @@ regimen_server <- function(id) {
                     choices = c("Regular Mode" = "regular",
                                 "Dosage Form Optimization" = "dosage_form",
                                 "Treatment Shortening" = "treatment_shortening"),
-                    selected = "regular"),
+                    selected = "regular",
+                    selectize = FALSE),
         
         conditionalPanel(
           condition = sprintf("input['%s'] == 'dosage_form'", ns("optimization_mode")),
@@ -588,3 +589,4 @@ regimen_server <- function(id) {
   })
   
 }
+
