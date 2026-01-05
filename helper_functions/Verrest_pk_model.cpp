@@ -47,7 +47,8 @@ AUCEOC
 $GLOBAL
 static double cumamt = 0;
 static double last_id = -1;
-
+static double time_to_ec90 = -1;  
+static double last_id_ec90 = -1;  
 
 $MAIN 
 double EC90 = 10.6; 
@@ -56,6 +57,12 @@ if(ID != last_id) {
   cumamt = 0;
   last_id = ID;
 }
+
+if(ID != last_id_ec90) {
+  time_to_ec90 = -1;
+  last_id_ec90 = ID;
+}
+
 
 if(EVID == 1) {
   cumamt += AMT;
@@ -133,6 +140,10 @@ if(CONC_CENT > Cmax_track){
 double RT1 = 0;
 if(CONC_CENT > EC90 && SOLVERTIME > 0) RT1 = 1; //https://github.com/metrumresearchgroup/mrgsolve/issues/375
 
+if(time_to_ec90 < 0 && CONC_CENT > EC90 && SOLVERTIME > 0) {
+  time_to_ec90 = SOLVERTIME;
+}
+
 dxdt_TEC90 = RT1;
 double TOEC90 = TEC90;
 
@@ -154,9 +165,10 @@ if(TIME >= TSWITCH) {
   AUC_inf = 0; // Before TSWITCH, AUC is zero
 }
 
+double T_EC90 = time_to_ec90;  
 
 double MIL = TEC90;  
 double h = h0 * (1- (MIL/(I50+MIL)));
 
 $CAPTURE
-CONC_CENT AMT AUC_inf Cmax h Tmax FFM DDOS_calc COVF1 COVF2 F_DEPOT AGE WT HT SEX FLAG CL KE V 
+CONC_CENT T_EC90 AMT AUC_inf Cmax h Tmax FFM DDOS_calc COVF1 COVF2 F_DEPOT AGE WT HT SEX FLAG CL KE V 
