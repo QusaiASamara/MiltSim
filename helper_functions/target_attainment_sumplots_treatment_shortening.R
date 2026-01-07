@@ -108,7 +108,7 @@ target_attainment_sumplots_treatment_shortening <- function(ref_data, binned_df,
         fill = "WT_BAND"
       ) +
       geom_hline(
-        yintercept = 3, 
+        yintercept = 9.175, 
         linetype = "dashed", 
         color = "yellowgreen", 
         size = 0.8

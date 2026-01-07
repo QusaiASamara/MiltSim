@@ -1155,7 +1155,7 @@ server <- function(input, output, session) {
         
         T_EC90_data <- df_current_TEC90 %>% 
           mutate(
-            LOWER_TEC90 = ifelse(T_EC90 < 3, 1, 0),
+            LOWER_TEC90 = ifelse(T_EC90 > 9.175, 1, 0),
           )
         
         basic_summary <- T_EC90_data %>% 
